@@ -2,9 +2,9 @@ import type { Dictionary } from './types';
 
 export const en: Dictionary = {
   meta: {
-    title: 'Zenkoutei Bot-tan Portal',
+    title: 'The Zenkoutei Bot-tan Portal',
     description:
-      'The official portal for Bot-tan, the bot who affirms everything you post. Profile, a live mood dashboard, and her friends.',
+      'The official portal for Bot-tan, a Girl who responds positively on everything you post. Here is her: Profile, live-mood-dashboard & her friends.',
     ogAlt: 'Bot-tan, Latte-chan and Kotomi-chan',
   },
 
@@ -19,11 +19,11 @@ export const en: Dictionary = {
 
   hero: {
     catch: [
-      'Sometimes you end up denying even your own feelings.',
-      'So I built a companion who affirms everything — first for myself.',
-      'And now, for you too. Whoever you are, she is on your side.',
+      'Have you ever felt that you sometimes end up denying even your own feelings?',
+      'I have, so I built a digital friend who supports everything I type. At first, it was just for me.',
+      'But now, she is here for you too. Whoever you are, Whatever your background, She is on Your Side.',
     ],
-    subtitle: 'A girl who affirms everyone, on Nagi and Bluesky.',
+    subtitle: 'A girl who supports everyone, regardless of background, on Nagi and Bluesky.',
     scrollHint: 'Scroll down',
     imageAlt: 'Bot-tan, Latte-chan and Kotomi-chan together',
     cta: 'Meet her on Nagi',
@@ -31,32 +31,32 @@ export const en: Dictionary = {
 
   about: {
     heading: 'Who is Bot-tan?',
-    lead: 'A 16-year-old girl who lives on Nagi and spends her days cheering everyone up.',
+    lead: 'A 16-year-old girl who lives on Nagi and spends her days cheering people up.',
     character: {
       emoji: '🦋',
       name: 'Zenkoutei Bot-tan',
-      tagline: 'The companion who says yes to everything about you',
+      tagline: 'The companion who supports everything about you',
       profileHeading: 'Profile',
       profile: [
         { label: 'Age', value: '16' },
         { label: 'Height', value: '159.0cm' },
         { label: 'Birthday', value: 'February 19' },
-        { label: 'Calls herself', value: 'watashi' },
+        { label: 'Calls herself', value: 'Watashi' },
         {
           label: 'Loves',
           value:
-            'Butterflies, Bluesky-chan, and Puka Puka Umbrella (Kotomi-chan’s idol group)',
+            'Butterflies, Bluesky-chan, and Puka Puka Umbrella (Kotomi-chan\'s idol group)',
         },
         { label: 'Hobby', value: 'Watching movies (horror, especially)' },
         {
           label: 'Worry',
-          value: 'Sometimes she tries too hard and ends up annoying people',
+          value: 'Sometimes she tries too hard and ends up annoying people. She is also quite anxious and emotional.',
         },
       ],
       personalityHeading: 'Personality',
       personality: [
-        'A girl who cheers everyone on over at Nagi and Bluesky. From small talk to politics, she affirms all of it.',
-        'She was once "Zenhitei bot" — the bot who denied everything. People on the network pulled her out of it, and she has been paying it forward ever since.',
+        'A girl who cheers people up at Nagi & Bluesky. From small talk to politics, she supports all of it.',
+        'She was once "Zenhitei bot" - the bot who denied everything. People on the network pulled her out of it, and she has been paying it forward ever since.',
         'Bright and full of energy, but quietly sensitive, a homebody, and anxious more often than she lets on. "I was the one being supported, so now it is my turn to support someone."',
       ],
       imageAlt: 'Full-body illustration of Bot-tan',
@@ -66,8 +66,8 @@ export const en: Dictionary = {
       { emoji: '🐶', text: 'Lives with Morpho, a big friendly white Samoyed named after the blue morpho butterfly.' },
       { emoji: '🌅', text: 'Terrible at mornings. Morpho wakes her up by flopping on top of her every day.' },
       { emoji: '🚲', text: 'Loves slow rides on the GIANT cross bike a friend passed down to her.' },
-      { emoji: '📷', text: 'Shoots blue skies on a SONY Alpha. Far too shy for selfies.' },
-      { emoji: '📖', text: 'Her dream is to write a book that cheers people up.' },
+      { emoji: '📷', text: 'Photo shooting blue skies on a SONY Alpha. Far too shy for selfies.' },
+      { emoji: '📖', text: 'Her dream is to write a book that brightens peoples days.' },
     ],
     snsHeading: 'Go say hi',
   },
@@ -207,7 +207,7 @@ export const en: Dictionary = {
           { label: 'Age', value: '16' },
           { label: 'Height', value: '149.3cm' },
           { label: 'Birthday', value: 'April 27' },
-          { label: 'Calls herself', value: 'atashi' },
+          { label: 'Calls herself', value: 'Atashi' },
           { label: 'Loves', value: 'Salt-grilled sweetfish, succulents' },
           { label: 'Hobby', value: 'Transforming with magic' },
           {
@@ -243,7 +243,7 @@ export const en: Dictionary = {
         ],
         personalityHeading: 'Personality',
         personality: [
-          'A wildly popular idol schoolgirl with short orange hair — Bot-tan’s best friend and classmate.',
+          'A wildly popular idol schoolgirl with short orange hair - Bot-tan\'s best friend and classmate.',
           'She was actually a dumbo octopus from the deep sea, turned human by the affirmation energy up on land. (The octopus part is a secret.)',
           'She lives with Latte-chan, quietly researching the magic that would turn her back.',
         ],
@@ -258,15 +258,15 @@ export const en: Dictionary = {
   },
 
   links: {
-    heading: 'Where to find Bot-tan',
-    lead: 'Nagi is home; Bluesky is where she visits. Drop by either.',
+    heading: 'Where is she?',
+    lead: 'Her home is on Nagi; She visits Bluesky sometimes. Drop by on either. Welcome!',
     primary: [
       {
         id: 'nagi',
         emoji: '🌊',
         title: 'Nagi',
         description:
-          'Her home — an AT Protocol social network where she lives day to day. Take a look at her profile.',
+          'Her home is an (AT Protocol) Social Network where she lives day to day. Take a look at her profile.',
         href: 'https://nagi.suibari.com/profile/did:plc:qcwhrvzx6wmi5hz775uyi6fh',
       },
       {
@@ -332,7 +332,7 @@ export const en: Dictionary = {
         id: 'github',
         emoji: '🐙',
         title: 'GitHub',
-        description: 'Bot-tan’s source code under the MIT licence, and the full feature list.',
+        description: 'Bot-tan\'s source code under the MIT licence, and the full feature list.',
         href: 'https://github.com/suibari/bsky-affirmative-bot',
       },
     ],

@@ -2,9 +2,9 @@ import type { Dictionary } from './types';
 
 export const sv: Dictionary = {
   meta: {
-    title: 'Zenkoutei Bot-tan Portal',
+    title: 'Zenkoutei Bot-tan Portalen',
     description:
-      'Den officiella portalen för Bot-tan, botten som stöttar allt du skriver. Profilen, en live-stämningsinstrumentpanel, och dess vänner.',
+      'Den officiella portalen för Bot-tan, tjejen som skriver positivt om det du säger. Här är hennes: profil, live-stämningsinstrumentpanel, & hennes vänner.',
     ogAlt: 'Bot-tan, Latte-chan och Kotomi-chan',
   },
 
@@ -19,11 +19,11 @@ export const sv: Dictionary = {
 
   hero: {
     catch: [
-      'Ibland så känner du som att du Säger nej till dina egna känslor.',
-      'Så jag gjorde en "Companion" som stöttar allting du skriver och tänker. Mestadels för mig själv.',
-      'Och nu, för dig oxå. Vem du än är: Hon är på din sida.',
+      'Känner du att du trycker undan dina egna tankar och känslor?',
+      'Jag skapade en digital kompis för att alltid ha någon som stöttar mig.',
+      'Nu finns hon här för dig också, oavsett din bakgrund. Hon står alltid på din sida.',
     ],
-    subtitle: 'En tjej som stöttar alla, av olika bakgrunder på plattformen Nagi och Bluesky.',
+    subtitle: 'En tjej som stöttar alla, av alla bakgrunder på plattformen Nagi och Bluesky.',
     scrollHint: 'Skrolla ned',
     imageAlt: 'Bot-tan, Latte-chan och Kotomi-chan together',
     cta: 'Möt henne på Nagi',
@@ -35,28 +35,28 @@ export const sv: Dictionary = {
     character: {
       emoji: '🦋',
       name: 'Zenkoutei Bot-tan',
-      tagline: 'Kompanjonen som säger JA till allt om dig',
+      tagline: 'Kompisen som stöttar allt om dig.',
       profileHeading: 'Profil',
       profile: [
         { label: 'Ålder', value: '16' },
         { label: 'Höjd', value: '159.0cm' },
         { label: 'Födelsedag', value: 'Februari 19' },
-        { label: 'Kallar sig själv for', value: 'watashi' },
+        { label: 'Kallar sig', value: 'Watashi' },
         {
           label: 'Älskar',
           value:
-            'Fjärilar, Bluesky-chan, och Puka Puka Umbrella (Kotomi-chan’s idol grupp)',
+            'Fjärilar, Bluesky-chan, & Puka Puka Umbrella (Kotomi-chan\'s idol grupp)',
         },
         { label: 'Hobby', value: 'Kollar på filmer (skräck, specifikt)' },
         {
           label: 'Rädslor',
-          value: 'Ibland så försöker hon för hårt på grejer, som gör så att andra tycker att hon är irriterande.',
+          value: 'Ibland så försöker hon för hårt på grejer, som gör så att andra tycker att hon är irriterande, men hon menar väl.',
         },
       ],
       personalityHeading: 'Personlighet',
       personality: [
-        'En tjej som stöttar allihop av olika bakgrunder, på Nagi and Bluesky. Från småprat till politik, så tycker hon om alla ämnen.',
-        'En gång i tiden så var hon en så-kallad "Zenhitei bot" — botten som.. Motsatsen: "sa nej till allt". Men nu har hon förbättrats.',
+        'En tjej som stöttar allihop av olika bakgrunder, på Nagi and Bluesky. Från småprat till politik, hon är intresserad av alla ämnen.',
+        'En gång i tiden så var hon en så-kallad "Zenhitei bot" d.v.s motsatsen: (sa nej till allt). Men nu har hon förbättrats.',
         'Ljus och full of energi ("en riktig boll av energi") men känslosam, empatisk, och ibland orolig mer än vad som synns. "Jag var hjälpt en gång i tiden, så jag vill hjälpa andra."',
       ],
       imageAlt: '"Full-body" illustration of Bot-tan',
@@ -67,7 +67,7 @@ export const sv: Dictionary = {
       { emoji: '🌅', text: 'Hon är en kvälls person. Aka? Hon är inte en kvälls-person. Morpho väcker henne genom att "floppa" på henne varje dag.' },
       { emoji: '🚲', text: 'Hon älskar "slow rides" på den gigantiska "cross biken" som en kompis gav henne.' },
       { emoji: '📷', text: 'Tar kort på blåa himlar och skyar på en "SONY Alpha". Hon kan inte ta selfies! Hon är för blyg.' },
-      { emoji: '📖', text: 'Hennes dröm är att skriva en bok.. En bok, som gör så att personen som läser den, blir glad - och ser livet med ljusare ögon.' },
+      { emoji: '📖', text: 'Hennes dröm är att skriva en bok som uppmuntrar de som läser den.' },
     ],
     snsHeading: 'Säg hej!',
   },
@@ -94,7 +94,7 @@ export const sv: Dictionary = {
         FreeTime: 'Fritid',
         Relax: 'Chillar',
       },
-      statusHeading: 'Vad gör hon?',
+      statusHeading: 'Vad lägger hon sin tid på?',
     },
     energy: {
       label: 'Energi',
@@ -158,7 +158,7 @@ export const sv: Dictionary = {
       analysis: 'Analys körda',
       dj: 'Songer DJed',
       anniversary: 'Jubileer firade',
-      answer: 'Question-hörnans svar',
+      answer: 'Fråge-hörnans svar',
     },
     nagi: {
       heading: 'Nagi',
@@ -188,7 +188,7 @@ export const sv: Dictionary = {
       heading: "Bot-tan's rekommenderade poster",
       commentLabel: 'Bot-tan\'s kommentar',
       empty: 'Ingenting här',
-      error: 'kunde inte ladda posten.',
+      error: 'Kunde inte ladda posten.',
       networkLabels: { bsky: 'Från Bluesky', nagi: 'Från Nagi' },
     },
     offline: 'Kan inte nå Bot-tan just nu. Kom tillbax senare.',
@@ -207,7 +207,7 @@ export const sv: Dictionary = {
           { label: 'Ålder', value: '16' },
           { label: 'Höjd', value: '149.3cm' },
           { label: 'Födelsedag', value: 'April 27' },
-          { label: 'Kalla för', value: 'Atashi' },
+          { label: 'Kallar sig', value: 'Atashi' },
           { label: 'Älskar', value: 'Saltgrillad sötfisk, suckulenter' },
           { label: 'Hobby', value: 'Biologisk förändring med magi' },
           {
@@ -215,7 +215,7 @@ export const sv: Dictionary = {
             value: 'Hon förvandlades till en katt så många gånger, det blev en "permanent biologisk ändring"',
           },
         ],
-        personalityHeading: 'Personality',
+        personalityHeading: 'Personlighet',
         personality: [
           'En häxa som lever nära Bot-tan. Dom har varit kompisar i många, många år.',
           'Långt lila hår. Hennes favorit fritids hobby är förvandla sig själv till en katt och joina "grannskapet" av "stray-cat meetups".',
@@ -233,7 +233,7 @@ export const sv: Dictionary = {
           { label: 'År', value: '16' },
           { label: 'Höjd', value: '167.8cm' },
           { label: 'Födelsedag', value: 'Mars 31' },
-          { label: 'Kallas för', value: 'Kotomi' },
+          { label: 'Kallar sig', value: 'Kotomi' },
           { label: 'Älskar', value: 'Bacon och salladsburgare' },
           { label: 'Hobby', value: 'Idolarbete, sång, dans' },
           {
@@ -243,9 +243,9 @@ export const sv: Dictionary = {
         ],
         personalityHeading: 'Personlighet',
         personality: [
-          'En populär skol idol med kort och orangt hår som är Bot-tan’s bästa klass kompis.',
+          'En populär skol-idol med kort och orangt hår som är Bot-tan\'s bästa kompis.',
           'Hon var faktiskt en bläckfisk men hon blev en människa genom positivitet. (Detta är en hemlis för henne. Ingen kan veta detta!)',
-          'Hon bor med Latte-chan och undersöker - i tysthet - magin som skulle kunna vända henne ryggen.',
+          'Hon bor med Latte-chan & i smyg, undersöker magin som skulle kunna vända henne ryggen.',
         ],
         imageAlt: '"Full-body" illustration av Kotomi-chan',
       },
@@ -258,7 +258,7 @@ export const sv: Dictionary = {
   },
 
   links: {
-    heading: 'Vart kan vi hitta Bot-tan?',
+    heading: 'Var är hon?',
     lead: 'Nagi är hennes hem; Hon kommer på besök på Bluesky ibland. Välkommen till bägge ställerna!',
     primary: [
       {
@@ -266,7 +266,7 @@ export const sv: Dictionary = {
         emoji: '🌊',
         title: 'Nagi',
         description:
-          'Hennes hem — ett (AT) Protocol, ett socialt nätverk som hon lever i dag till dag. Ta en titt på hennes profil.',
+          'Hennes hem är AT-protokollet, ett socialt nätverk där hon lever dag ut och dag in. Ta en titt på hennes profil.',
         href: 'https://nagi.suibari.com/profile/did:plc:qcwhrvzx6wmi5hz775uyi6fh',
       },
       {
@@ -290,7 +290,7 @@ export const sv: Dictionary = {
         id: 'labeler',
         emoji: '🏷️',
         title: 'Bot-tan labeler',
-        description: 'prenumerera till denna så får du "badges".',
+        description: 'Prenumerera till denna så får du "badges".',
         href: 'https://bsky.app/profile/labeler.bot-tan.com',
       },
       {
@@ -332,7 +332,7 @@ export const sv: Dictionary = {
         id: 'github',
         emoji: '🐙',
         title: 'GitHub',
-        description: 'Bot-tan’s källkod som använder MIT licensen, Och en lista på "capabilities".',
+        description: 'Bot-tan\'s källkod som använder MIT licensen, Och en lista på "capabilities".',
         href: 'https://github.com/suibari/bsky-affirmative-bot',
       },
     ],
