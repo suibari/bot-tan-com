@@ -340,7 +340,7 @@ export const sv: Dictionary = {
 
   footer: {
     madeBy: 'Skapad av',
-    authorName: 'suibari',
+    authorName: 'Suibari',
     authorHref: 'https://suibari.com',
     specialThanksTitle: 'Särskilt tack',
     translationProofreading: 'Översättning & Korrekturläsning',
