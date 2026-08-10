@@ -112,7 +112,7 @@ export const sv: Dictionary = {
         ok: 'Allt körs okej!',
         stale: 'Lite långsamt',
         down: 'Inaktiv',
-        unknown: 'Vet Ej',
+        unknown: 'Vet ej',
         unconfigured: 'Inte än konfigurerad',
       },
       detailLabel: 'Detaljer',
@@ -136,7 +136,7 @@ export const sv: Dictionary = {
         analysis: 'Analys',
         dj: 'DJ',
         anniversary: 'Årsdag',
-        answer: 'Fråge hörn',
+        answer: 'Fråge hörnan',
         recap: 'Sammanfattning',
       },
     },
@@ -191,7 +191,7 @@ export const sv: Dictionary = {
       error: 'Kunde inte ladda posten.',
       networkLabels: { bsky: 'Från Bluesky', nagi: 'Från Nagi' },
     },
-    offline: 'Kan inte nå Bot-tan just nu. Kom tillbax senare.',
+    offline: 'Kunde inte nå Bot-tan just nu. Kom tillbax senare.',
   },
 
   friends: {
