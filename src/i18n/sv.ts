@@ -103,7 +103,7 @@ export const sv: Dictionary = {
     health: {
       heading: 'Hur är allt?',
       tiles: {
-        jetstream: 'Jetstream',
+        jetstream: 'PDS → Relay → Jetstream',
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
         gemini: 'Gemini',

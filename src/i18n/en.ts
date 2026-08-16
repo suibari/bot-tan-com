@@ -103,7 +103,7 @@ export const en: Dictionary = {
     health: {
       heading: 'How is everything running?',
       tiles: {
-        jetstream: 'Jetstream',
+        jetstream: 'PDS → Relay → Jetstream',
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
         gemini: 'Gemini',

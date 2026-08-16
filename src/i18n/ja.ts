@@ -100,7 +100,7 @@ export const ja: Dictionary = {
     health: {
       heading: '調子はどう？',
       tiles: {
-        jetstream: 'Jetstream',
+        jetstream: 'PDS → Relay → Jetstream',
         botServer: 'botたんサーバー',
         localLlm: 'サブサーバー（ローカルLLM）',
         gemini: 'Gemini',
