@@ -191,6 +191,11 @@ export const en: Dictionary = {
       error: 'Could not load the post.',
       networkLabels: { bsky: 'From Bluesky', nagi: 'From Nagi' },
     },
+    learnedThings: {
+      heading: 'Things you taught me recently',
+      empty: 'Nothing learned yet',
+      searchLabel: 'Search Google for “{label}”',
+    },
     offline: 'Cannot reach Bot-tan right now. Please come back a little later.',
   },
 

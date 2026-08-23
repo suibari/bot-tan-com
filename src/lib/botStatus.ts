@@ -90,6 +90,14 @@ export interface BotStatusPayload {
   };
   health?: HealthSnapshot | null;
   topPost?: TopPostPayload | null;
+  memoryImpressions?: MemoryImpressionPayload[];
+}
+
+/** A recent public conversation topic, with an optional verified reading. */
+export interface MemoryImpressionPayload {
+  label: string;
+  spokenForm?: string | null;
+  occurredAt?: string;
 }
 
 /**

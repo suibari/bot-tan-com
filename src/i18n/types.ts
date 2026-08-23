@@ -202,6 +202,12 @@ export interface Dictionary {
       error: string;
       networkLabels: { bsky: string; nagi: string };
     };
+    learnedThings: {
+      heading: string;
+      empty: string;
+      /** Accessible label for a tag link. Supports the {label} placeholder. */
+      searchLabel: string;
+    };
     /** Shown when the WebSocket never connects. */
     offline: string;
   };

@@ -188,6 +188,11 @@ export const ja: Dictionary = {
       error: '投稿の取得に失敗しました。',
       networkLabels: { bsky: 'Blueskyの投稿', nagi: 'Nagiの投稿' },
     },
+    learnedThings: {
+      heading: '最近教えてもらったこと',
+      empty: 'まだ覚えたことはないよ',
+      searchLabel: 'Googleで「{label}」を検索',
+    },
     offline: 'いまはbotたんとつながれないみたい。あとでまた見に来てね。',
   },
 

@@ -191,6 +191,11 @@ export const sv: Dictionary = {
       error: 'kunde inte ladda posten.',
       networkLabels: { bsky: 'Från Bluesky', nagi: 'Från Nagi' },
     },
+    learnedThings: {
+      heading: 'Saker du har lärt mig nyligen',
+      empty: 'Inget inlärt ännu',
+      searchLabel: 'Sök på Google efter ”{label}”',
+    },
     offline: 'Kan inte nå Bot-tan just nu. Kom tillbax senare.',
   },
 

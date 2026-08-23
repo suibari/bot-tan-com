@@ -6,6 +6,7 @@ import HealthStrip from './HealthStrip.astro';
 import DayTimeline from './DayTimeline.astro';
 import NetworkPanel from './NetworkPanel.astro';
 import TopPostCard from './TopPostCard.astro';
+import LearnedThingsCard from './LearnedThingsCard.astro';
 import StatTile from './StatTile.astro';
 import ChartCard from './ChartCard.astro';
 import { useTranslations, bcp47, type Lang } from '../../i18n';
@@ -61,6 +62,7 @@ const runtimeStrings = {
   connection: d.connection,
   charts: d.charts,
   topPost: d.topPost,
+  learnedThings: d.learnedThings,
   offline: d.offline,
   health: d.health,
   timeline: d.timeline,
@@ -110,6 +112,10 @@ const runtimeStrings = {
       <DayTimeline t={t} />
 
       <TopPostCard t={t} />
+
+      <hr class="dash__rule" />
+
+      <LearnedThingsCard t={t} />
 
       <hr class="dash__rule" />
 
@@ -219,6 +225,10 @@ const runtimeStrings = {
       empty: string;
       error: string;
       networkLabels: { bsky: string; nagi: string };
+    };
+    learnedThings: {
+      empty: string;
+      searchLabel: string;
     };
     offline: string;
     health: {
@@ -933,6 +943,7 @@ const runtimeStrings = {
 
     // ------------------------------------------------------ status frames --
     let lastTopPostUri: string | null = null;
+    let lastMemoryImpressionsKey: string | null = null;
 
     const onMessage = (data: BotStatusPayload) => {
       // --- mood ---
@@ -1060,7 +1071,59 @@ const runtimeStrings = {
         lastTopPostUri = null;
         renderEmptyTopPost();
       }
+
+      const memoryImpressionsKey = JSON.stringify(data.memoryImpressions ?? []);
+      if (memoryImpressionsKey !== lastMemoryImpressionsKey) {
+        lastMemoryImpressionsKey = memoryImpressionsKey;
+        renderMemoryImpressions(data.memoryImpressions);
+      }
     };
+
+    // --------------------------------------------- things Bot-tan learned --
+    function renderMemoryImpressions(
+      impressions: NonNullable<BotStatusPayload['memoryImpressions']> | undefined,
+    ) {
+      const container = $('learned-things');
+      if (!container) return;
+      const valid = Array.isArray(impressions)
+        ? impressions.filter((item) => typeof item?.label === 'string' && item.label.trim())
+        : [];
+      if (valid.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'learned__empty';
+        empty.textContent = strings.learnedThings.empty;
+        container.replaceChildren(empty);
+        return;
+      }
+
+      const tags = valid.slice(0, 20).map((item) => {
+        const label = item.label.trim();
+        const link = document.createElement('a');
+        link.className = 'learned__tag';
+        link.href = `https://www.google.com/search?q=${encodeURIComponent(label)}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.ariaLabel = template(strings.learnedThings.searchLabel, { label });
+
+        const reading = typeof item.spokenForm === 'string' ? item.spokenForm.trim() : '';
+        if (reading) {
+          const ruby = document.createElement('ruby');
+          ruby.append(`#${label}`);
+          const rpOpen = document.createElement('rp');
+          rpOpen.textContent = '（';
+          const rt = document.createElement('rt');
+          rt.textContent = reading;
+          const rpClose = document.createElement('rp');
+          rpClose.textContent = '）';
+          ruby.append(rpOpen, rt, rpClose);
+          link.append(ruby);
+        } else {
+          link.textContent = `#${label}`;
+        }
+        return link;
+      });
+      container.replaceChildren(...tags);
+    }
 
     // --------------------------------------------------- recommended post --
     function renderEmptyTopPost() {

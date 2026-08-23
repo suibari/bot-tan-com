@@ -1,0 +1,88 @@
+---
+import type { Dictionary } from '../../i18n';
+
+interface Props {
+  t: Dictionary;
+}
+
+const { t } = Astro.props;
+const learned = t.dashboard.learnedThings;
+---
+
+<section class="learned" aria-labelledby="learned-things-heading">
+  <h3 class="learned__heading" id="learned-things-heading">{learned.heading}</h3>
+  <div class="learned__tags" id="learned-things" aria-live="polite">
+    <p class="learned__empty">{learned.empty}</p>
+  </div>
+</section>
+
+<style>
+  .learned {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .learned__heading {
+    margin: 0;
+    font-family: var(--font-hand);
+    font-size: 1.05rem;
+    color: var(--color-sky-deep);
+  }
+
+  .learned__tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.55rem 0.65rem;
+    min-height: 2rem;
+  }
+
+  .learned :global(.learned__empty) {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-ink-soft);
+  }
+
+  .learned :global(.learned__tag) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.25rem 0.7rem;
+    border: 1.5px solid color-mix(in srgb, var(--color-sky-deep) 32%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-paper) 88%, transparent);
+    color: var(--color-sky-deep);
+    font-size: 0.9rem;
+    line-height: 1.35;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    transition: translate 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .learned :global(.learned__tag:hover) {
+    translate: 0 -2px;
+    border-color: var(--color-sky-deep);
+    background: color-mix(in srgb, var(--color-sky-pale) 58%, var(--color-paper));
+  }
+
+  .learned :global(.learned__tag:focus-visible) {
+    outline: 3px solid color-mix(in srgb, var(--color-sky-deep) 35%, transparent);
+    outline-offset: 2px;
+  }
+
+  .learned :global(ruby) {
+    ruby-align: center;
+  }
+
+  .learned :global(rt) {
+    color: var(--color-ink-soft);
+    font-size: 0.68em;
+    letter-spacing: 0.02em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .learned :global(.learned__tag) {
+      transition: none;
+    }
+  }
+</style>
