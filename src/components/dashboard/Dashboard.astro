@@ -61,6 +61,14 @@ const runtimeStrings = {
   useEnglishMood: lang === 'en',
   connection: d.connection,
   charts: d.charts,
+  sparkLabels: {
+    'bsky-likes': d.bsky.likes,
+    'bsky-affirmations': d.bsky.affirmations,
+    'bsky-affirmed-users': d.bsky.affirmedUsers,
+    'nagi-channels': d.nagi.totalChannels,
+    'ai-requests': d.common.aiRequests,
+    'ai-error-rate': d.common.aiErrorRate,
+  },
   topPost: d.topPost,
   learnedThings: d.learnedThings,
   offline: d.offline,
@@ -137,8 +145,16 @@ const runtimeStrings = {
               ))
             }
           </div>
-          <ChartCard title={d.charts.followerHistory} canvasId="follower-chart" />
-          <ChartCard title={d.charts.langBreakdown} canvasId="lang-chart" />
+          <ChartCard
+            title={d.charts.followerHistory}
+            canvasId="follower-chart"
+            interval={d.charts.dailyInterval}
+          />
+          <ChartCard
+            title={d.charts.langBreakdown}
+            canvasId="lang-chart"
+            interval={d.charts.currentBreakdown}
+          />
         </NetworkPanel>
 
         <NetworkPanel id="panel-nagi" title={d.nagi.heading} emoji="🌊" color={NETWORK_COLORS.nagi}>
@@ -156,8 +172,16 @@ const runtimeStrings = {
               ))
             }
           </div>
-          <ChartCard title={d.charts.nagiUserHistory} canvasId="nagi-user-chart" />
-          <ChartCard title={d.charts.nagiActivityHistory} canvasId="nagi-activity-chart" />
+          <ChartCard
+            title={d.charts.nagiUserHistory}
+            canvasId="nagi-user-chart"
+            interval={d.charts.dailyInterval}
+          />
+          <ChartCard
+            title={d.charts.nagiActivityHistory}
+            canvasId="nagi-activity-chart"
+            interval={d.charts.hourlyInterval}
+          />
         </NetworkPanel>
       </div>
 
@@ -217,8 +241,13 @@ const runtimeStrings = {
       langBreakdown: string;
       langCount: string;
       langOther: string;
+      dailyInterval: string;
+      hourlyInterval: string;
+      currentBreakdown: string;
+      pointDetail: string;
       empty: string;
     };
+    sparkLabels: Record<string, string>;
     topPost: {
       heading: string;
       commentLabel: string;
@@ -408,6 +437,7 @@ const runtimeStrings = {
           LinearScale,
           TimeScale,
           Tooltip,
+          Legend,
           Filler,
         },
       ] = await Promise.all([import('chart.js'), import('chartjs-adapter-date-fns')]);
@@ -422,6 +452,7 @@ const runtimeStrings = {
         LinearScale,
         TimeScale,
         Tooltip,
+        Legend,
         Filler,
       );
 
@@ -441,7 +472,16 @@ const runtimeStrings = {
       maintainAspectRatio: false,
       // One series, so the title already says what is plotted — a legend box
       // with a single swatch would just restate it.
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: (context: { dataset: { label?: string }; parsed: { y: number | null } }) =>
+              `${context.dataset.label ?? yTitle}: ${numberFormat.format(context.parsed.y ?? 0)}`,
+          },
+        },
+      },
       scales: {
         x: {
           type: 'time' as const,
@@ -478,8 +518,11 @@ const runtimeStrings = {
           backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
           borderWidth: 2,
           tension: 0.25,
-          pointRadius: 0,
+          // Keep each daily observation visible. The wider hit radius also
+          // makes mouse and touch selection practical on the small canvas.
+          pointRadius: 2.5,
           pointHoverRadius: 5,
+          pointHitRadius: 12,
           fill: true,
         },
       ],
@@ -547,6 +590,13 @@ const runtimeStrings = {
             legend: {
               display: true,
               labels: { color: MUTED_INK, font: { family: 'var(--font-sans)', size: 11 } },
+            },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: (context: { dataset: { label?: string }; parsed: { y: number | null } }) =>
+                  `${context.dataset.label ?? ''}: ${numberFormat.format(context.parsed.y ?? 0)}`,
+              },
             },
           },
           scales: {
@@ -617,7 +667,16 @@ const runtimeStrings = {
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: (context: { dataset: { label?: string }; parsed: { x: number | null } }) =>
+                  `${context.dataset.label ?? strings.charts.langCount}: ${numberFormat.format(context.parsed.x ?? 0)}`,
+              },
+            },
+          },
           scales: {
             x: {
               grid: { color: GRID_COLOR },
@@ -635,15 +694,23 @@ const runtimeStrings = {
      * Draws a 30-day trend inside a stat tile. Every stored day gets a marker,
      * while the latest point is larger so the eye still lands on "now".
      */
-    const drawSparkline = (id: string, values: number[], color: string) => {
+    const drawSparkline = (
+      id: string,
+      points: { date: string; value: number }[],
+      color: string,
+      label: string,
+    ) => {
       const svg = $(`${id}-spark`);
       if (!(svg instanceof SVGSVGElement)) return;
 
+      const values = points.map((point) => point.value);
       const spark = sketchSparkline(values, { seed: id });
       svg.replaceChildren();
       if (!spark) return;
 
       svg.setAttribute('viewBox', spark.viewBox);
+      svg.setAttribute('tabindex', '0');
+      svg.setAttribute('aria-label', `${label}. ${strings.charts.dailyInterval}`);
 
       const ns = 'http://www.w3.org/2000/svg';
       const area = document.createElementNS(ns, 'path');
@@ -674,7 +741,71 @@ const runtimeStrings = {
         return dot;
       });
 
-      svg.append(area, line, ...dots);
+      const tip = $(`${id}-spark-tip`);
+      let selectedIndex = spark.points.length - 1;
+      let pinnedIndex: number | null = null;
+
+      const detail = (index: number) =>
+        template(strings.charts.pointDetail, {
+          date: points[index]!.date,
+          label,
+          value: numberFormat.format(points[index]!.value),
+        });
+
+      const showPoint = (index: number, pin = false) => {
+        selectedIndex = index;
+        if (pin) pinnedIndex = index;
+        if (tip) {
+          tip.textContent = detail(index);
+          tip.hidden = false;
+        }
+        svg.setAttribute('aria-label', detail(index));
+      };
+
+      const restorePoint = () => {
+        if (pinnedIndex !== null) showPoint(pinnedIndex);
+        else if (tip) tip.hidden = true;
+      };
+
+      // Transparent, larger targets make every plotted day reachable without
+      // changing the hand-drawn appearance of the sparkline.
+      const hitTargets = spark.points.map((point, index) => {
+        const previousX = spark.points[index - 1]?.x ?? point.x;
+        const nextX = spark.points[index + 1]?.x ?? point.x;
+        const startX = index === 0 ? 0 : (previousX + point.x) / 2;
+        const endX = index === spark.points.length - 1 ? 100 : (point.x + nextX) / 2;
+        const hit = document.createElementNS(ns, 'rect');
+        hit.classList.add('spark-hit');
+        hit.setAttribute('x', String(startX));
+        hit.setAttribute('y', '0');
+        hit.setAttribute('width', String(Math.max(0, endX - startX)));
+        hit.setAttribute('height', '24');
+        hit.setAttribute('fill', 'transparent');
+        hit.setAttribute('stroke', 'transparent');
+        hit.setAttribute('aria-label', detail(index));
+
+        const title = document.createElementNS(ns, 'title');
+        title.textContent = detail(index);
+        hit.append(title);
+
+        hit.addEventListener('pointerenter', () => showPoint(index));
+        hit.addEventListener('pointerleave', restorePoint);
+        hit.addEventListener('click', () => showPoint(index, true));
+        return hit;
+      });
+
+      svg.addEventListener('focus', () => showPoint(selectedIndex));
+      svg.addEventListener('blur', restorePoint);
+      svg.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+
+        if (event.key === 'ArrowLeft') selectedIndex = Math.max(0, selectedIndex - 1);
+        if (event.key === 'ArrowRight') selectedIndex = Math.min(points.length - 1, selectedIndex + 1);
+        showPoint(selectedIndex, event.key === 'Enter' || event.key === ' ');
+      });
+
+      svg.append(area, line, ...dots, ...hitTargets);
     };
 
     const SPARK_SERIES: { id: string; group: 'bsky' | 'nagi' | 'common'; key: string; color: string }[] = [
@@ -690,14 +821,21 @@ const runtimeStrings = {
 
     const renderSparklines = (history: HistoryPayload) => {
       for (const series of SPARK_SERIES) {
-        const values = history.daily
-          .map((point) => point.metrics?.[series.group]?.[series.key])
-          .filter((value): value is number => typeof value === 'number')
+        const points = history.daily
+          .flatMap((point) => {
+            const value = point.metrics?.[series.group]?.[series.key];
+            return typeof value === 'number' ? [{ date: point.date, value }] : [];
+          })
           .slice(-SPARK_DAYS);
 
         // Fewer than two points is not a trend; leave the tile without one.
-        if (values.length >= 2) {
-          drawSparkline(series.id, values, series.color);
+        if (points.length >= 2) {
+          drawSparkline(
+            series.id,
+            points,
+            series.color,
+            strings.sparkLabels[series.id] ?? series.key,
+          );
         }
       }
     };
@@ -800,6 +938,7 @@ const runtimeStrings = {
         const show = () => showTip(range, statusLabel, segment.mood, segment.moodEn, segment.energy);
         button.addEventListener('pointerenter', show);
         button.addEventListener('focus', show);
+        button.addEventListener('click', show);
         band.append(button);
 
         // The table twin: everything the tooltip shows, without hovering.
@@ -862,7 +1001,36 @@ const runtimeStrings = {
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('vector-effect', 'non-scaling-stroke');
-        energySvg.append(path);
+
+        const energyTargets = payload.segments.map((segment) => {
+          const startX = onDayFraction(segment.start) * 100;
+          const endX = onDayFraction(segment.end) * 100;
+          const range = `${hhmm.format(new Date(segment.start))}–${hhmm.format(new Date(segment.end))}`;
+          const statusLabel = strings.statusLabels[segment.status] ?? segment.status;
+          const hit = document.createElementNS(ns, 'rect');
+          hit.classList.add('energy-hit');
+          hit.setAttribute('x', String(startX));
+          hit.setAttribute('y', '0');
+          hit.setAttribute('width', String(Math.max(0, endX - startX)));
+          hit.setAttribute('height', '24');
+          hit.setAttribute('fill', 'transparent');
+
+          const title = document.createElementNS(ns, 'title');
+          title.textContent = template(strings.timeline.segmentAria, {
+            time: range,
+            status: statusLabel,
+            energy: segment.energy,
+          });
+          hit.append(title);
+
+          const show = () =>
+            showTip(range, statusLabel, segment.mood, segment.moodEn, segment.energy);
+          hit.addEventListener('pointerenter', show);
+          hit.addEventListener('click', show);
+          return hit;
+        });
+
+        energySvg.append(path, ...energyTargets);
       }
     };
 

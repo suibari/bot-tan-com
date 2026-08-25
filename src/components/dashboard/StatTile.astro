@@ -38,14 +38,17 @@ const {
   {note && <p class="tile__note" id={`${id}-note`} />}
   {
     trend && (
-      <svg
-        class="tile__spark"
-        id={`${id}-spark`}
-        viewBox="0 0 100 24"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-        focusable="false"
-      />
+      <div class="tile__spark-wrap">
+        <svg
+          class="tile__spark"
+          id={`${id}-spark`}
+          viewBox="0 0 100 24"
+          preserveAspectRatio="none"
+          aria-label={label}
+          role="img"
+        />
+        <p class="tile__spark-tip" id={`${id}-spark-tip`} aria-live="polite" hidden />
+      </div>
     )
   }
 </div>
@@ -109,5 +112,37 @@ const {
     height: 1.5rem;
     display: block;
     overflow: visible;
+  }
+
+  .tile__spark-wrap {
+    position: relative;
+  }
+
+  .tile__spark-tip {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 0;
+    inset-block-end: calc(100% + 0.25rem);
+    margin: 0;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid color-mix(in srgb, var(--series) 35%, transparent);
+    border-radius: 0.35rem;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: 0 2px 8px rgb(61 55 51 / 0.12);
+    font-size: 0.68rem;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .tile__spark :global(.spark-hit) {
+    cursor: pointer;
+  }
+
+  .tile__spark:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--series) 55%, transparent);
+    outline-offset: 2px;
+    border-radius: 0.2rem;
   }
 </style>

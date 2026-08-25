@@ -179,6 +179,10 @@ export const ja: Dictionary = {
       langBreakdown: 'フォロワーの使用言語',
       langCount: '人数',
       langOther: 'その他',
+      dailyInterval: '1日ごとの記録（点に触れると日付と値を表示）',
+      hourlyInterval: '1時間ごとの集計・直近7日（棒に触れると時刻と値を表示）',
+      currentBreakdown: '現在のフォロワーを言語別に集計（棒に触れると人数を表示）',
+      pointDetail: '{date} · {label}: {value}',
       empty: 'まだデータが足りないよ',
     },
     topPost: {

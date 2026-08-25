@@ -182,6 +182,10 @@ export const sv: Dictionary = {
       langBreakdown: 'Följares språk',
       langCount: 'Följare',
       langOther: 'Annat',
+      dailyInterval: 'Registreras dagligen (tryck på en punkt för datum och värde)',
+      hourlyInterval: 'Summeras varje timme · senaste 7 dagarna (tryck på en stapel för tid och värde)',
+      currentBreakdown: 'Nuvarande följare per språk (tryck på en stapel för antal)',
+      pointDetail: '{date} · {label}: {value}',
       empty: 'Ingen data på detta ännu.',
     },
     topPost: {

@@ -2,13 +2,18 @@
 interface Props {
   title: string;
   canvasId: string;
+  /** How frequently the plotted values are aggregated or measured. */
+  interval: string;
 }
 
-const { title, canvasId } = Astro.props;
+const { title, canvasId, interval } = Astro.props;
 ---
 
 <figure class="chart">
-  <figcaption class="chart__title">{title}</figcaption>
+  <figcaption>
+    <span class="chart__title">{title}</span>
+    <span class="chart__interval">{interval}</span>
+  </figcaption>
   <div class="chart__canvas">
     <canvas id={canvasId} aria-label={title} role="img"></canvas>
   </div>
@@ -25,10 +30,19 @@ const { title, canvasId } = Astro.props;
   }
 
   .chart__title {
+    display: block;
     font-family: var(--font-hand);
     font-size: 0.95rem;
     color: var(--color-ink-soft);
-    margin-bottom: 0.6rem;
+    text-align: center;
+  }
+
+  .chart__interval {
+    display: block;
+    margin: 0.15rem 0 0.6rem;
+    color: var(--color-ink-soft);
+    font-size: 0.7rem;
+    line-height: 1.4;
     text-align: center;
   }
 

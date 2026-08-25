@@ -193,6 +193,10 @@ export interface Dictionary {
       langCount: string;
       /** Bucket label for the long tail of minor languages. */
       langOther: string;
+      dailyInterval: string;
+      hourlyInterval: string;
+      currentBreakdown: string;
+      pointDetail: string;
       empty: string;
     };
     topPost: {

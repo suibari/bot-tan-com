@@ -182,6 +182,10 @@ export const en: Dictionary = {
       langBreakdown: 'Follower languages',
       langCount: 'Followers',
       langOther: 'Other',
+      dailyInterval: 'Recorded daily (touch a point for its date and value)',
+      hourlyInterval: 'Hourly totals · last 7 days (touch a bar for its time and value)',
+      currentBreakdown: 'Current followers by language (touch a bar for its count)',
+      pointDetail: '{date} · {label}: {value}',
       empty: 'Not enough data yet',
     },
     topPost: {
