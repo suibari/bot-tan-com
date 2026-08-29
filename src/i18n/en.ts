@@ -141,8 +141,9 @@ export const en: Dictionary = {
       },
     },
     common: {
-      aiRequests: 'AI requests',
-      aiErrorRate: 'AI error rate',
+      aiRequests: 'Cloud LLM calls',
+      localAiRequests: 'Local LLM calls',
+      aiErrorRate: 'Cloud AI error rate',
       rateLimitHour: 'PDS write points (last hour)',
       rateLimitDay: 'PDS write points (last 24 hours)',
       rateUsage: '{percent}% of limit',

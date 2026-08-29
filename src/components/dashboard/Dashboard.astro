@@ -67,6 +67,7 @@ const runtimeStrings = {
     'bsky-affirmed-users': d.bsky.affirmedUsers,
     'nagi-channels': d.nagi.totalChannels,
     'ai-requests': d.common.aiRequests,
+    'ai-requests-local': d.common.localAiRequests,
     'ai-error-rate': d.common.aiErrorRate,
   },
   topPost: d.topPost,
@@ -189,6 +190,7 @@ const runtimeStrings = {
 
       <div class="dash__common">
         <StatTile label={d.common.aiRequests} id="ai-requests" trend />
+        <StatTile label={d.common.localAiRequests} id="ai-requests-local" trend />
         <StatTile label={d.common.aiErrorRate} id="ai-error-rate" suffix="%" trend />
         <StatTile label={d.common.rateLimitHour} id="repo-write-hour" note />
         <StatTile label={d.common.rateLimitDay} id="repo-write-day" note />
@@ -814,6 +816,7 @@ const runtimeStrings = {
       { id: 'bsky-affirmed-users', group: 'bsky', key: 'affirmedUsers', color: strings.tokens.network.bsky },
       { id: 'nagi-channels', group: 'nagi', key: 'totalChannels', color: strings.tokens.network.nagi },
       { id: 'ai-requests', group: 'common', key: 'aiRequests', color: 'var(--color-sky-deep)' },
+      { id: 'ai-requests-local', group: 'common', key: 'localAiRequests', color: 'var(--color-sky-deep)' },
       { id: 'ai-error-rate', group: 'common', key: 'aiErrorRate', color: 'var(--color-sky-deep)' },
     ];
 
@@ -1180,6 +1183,7 @@ const runtimeStrings = {
         setText('bsky-anniversary', fmt(daily.anniversary));
         setText('bsky-answer', fmt(daily.answer));
         setText('ai-requests', fmt(daily.rpd));
+        setText('ai-requests-local', fmt(daily.localRpd));
 
         // AI error rate, as a share of all requests made today.
         const totalRequests = (daily.rpd ?? 0) + (daily.rpdError ?? 0);

@@ -138,8 +138,9 @@ export const ja: Dictionary = {
       },
     },
     common: {
-      aiRequests: 'AI Request数',
-      aiErrorRate: 'AIエラー率',
+      aiRequests: 'クラウドLLM呼び出し数',
+      localAiRequests: 'ローカルLLM呼び出し数',
+      aiErrorRate: 'クラウドAIエラー率',
       rateLimitHour: 'PDS書き込みポイント（直近1時間）',
       rateLimitDay: 'PDS書き込みポイント（直近24時間）',
       rateUsage: '上限の {percent}%',

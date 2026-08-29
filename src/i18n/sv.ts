@@ -141,8 +141,9 @@ export const sv: Dictionary = {
       },
     },
     common: {
-      aiRequests: 'AI förfrågningar',
-      aiErrorRate: 'AI felfrekvens',
+      aiRequests: 'Moln-LLM-anrop',
+      localAiRequests: 'Lokala LLM-anrop',
+      aiErrorRate: 'Moln-AI felfrekvens',
       rateLimitHour: 'PDS write points (Senaste timmen)',
       rateLimitDay: 'PDS write points (Senaste 24 timmarna)',
       rateUsage: '{percent}% av gräns',

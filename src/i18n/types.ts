@@ -151,6 +151,7 @@ export interface Dictionary {
     };
     common: {
       aiRequests: string;
+      localAiRequests: string;
       aiErrorRate: string;
       rateLimitHour: string;
       rateLimitDay: string;

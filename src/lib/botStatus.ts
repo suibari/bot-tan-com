@@ -18,8 +18,12 @@ export interface DailyStats {
   dj?: number;
   anniversary?: number;
   answer?: number;
+  /** クラウドLLM（Gemini）の呼び出し数。 */
   rpd?: number;
   rpdError?: number;
+  /** ローカルLLM（Ollama）の呼び出し数。 */
+  localRpd?: number;
+  localRpdError?: number;
   /** Start of the current counting window, used to derive per-minute rates. */
   lastInitializedDate?: string;
   /** `[languageCode, count]` pairs. */
