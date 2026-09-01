@@ -103,7 +103,7 @@ export const ja: Dictionary = {
         jetstream: 'PDS → Relay → Jetstream',
         botServer: 'botたんサーバー',
         localLlm: 'サブサーバー（ローカルLLM）',
-        gemini: 'Gemini',
+        webSearch: '検索エンジン（自前ホスト）',
       },
       states: {
         ok: '元気に動いてるよ',

@@ -6,7 +6,7 @@ export const STATUSES = ['Sleep', 'WakeUp', 'Study', 'FreeTime', 'Relax'] as con
 export type Status = (typeof STATUSES)[number];
 
 /** The four things the liveness strip watches, each an aggregate of probes. */
-export const HEALTH_TILES = ['jetstream', 'botServer', 'localLlm', 'gemini'] as const;
+export const HEALTH_TILES = ['jetstream', 'botServer', 'localLlm', 'webSearch'] as const;
 export type HealthTileId = (typeof HEALTH_TILES)[number];
 
 export const HEALTH_STATES = ['ok', 'stale', 'down', 'unknown', 'unconfigured'] as const;

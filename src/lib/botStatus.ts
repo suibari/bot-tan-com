@@ -70,7 +70,7 @@ export interface HealthTileStatus {
 }
 
 /** The four tiles the dashboard shows, each an aggregate of its parts. */
-export type HealthTileId = 'jetstream' | 'botServer' | 'localLlm' | 'gemini';
+export type HealthTileId = 'jetstream' | 'botServer' | 'localLlm' | 'webSearch';
 
 export type HealthSnapshot = Partial<Record<HealthTileId, HealthTileStatus>> & {
   checkedAt?: string;

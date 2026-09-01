@@ -106,7 +106,7 @@ export const sv: Dictionary = {
         jetstream: 'PDS → Relay → Jetstream',
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
-        gemini: 'Gemini',
+        webSearch: 'Sökmotor (egen server)',
       },
       states: {
         ok: 'Allt körs okej!',

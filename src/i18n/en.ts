@@ -106,7 +106,7 @@ export const en: Dictionary = {
         jetstream: 'PDS → Relay → Jetstream',
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
-        gemini: 'Gemini',
+        webSearch: 'Search engine (self-hosted)',
       },
       states: {
         ok: 'Running fine',
