@@ -102,8 +102,8 @@ import {
         than decoration on the page around them. The source is the line art the
         Nagi client uses (bot_icon_trans.png); its interior is genuinely
         transparent, so masking recolours the strokes instead of stamping a
-        silhouette. She drifts down as the page scrolls up — the small
-        counter-motion of something a long way back.
+        silhouette. She moves gently against a graph pan, like something a
+        long way behind the nodes.
       -->
       <div class="memory__ghost" aria-hidden="true"></div>
       <canvas id="mem-canvas" aria-hidden="true"></canvas>
@@ -496,19 +496,6 @@ import {
     -webkit-mask: var(--mem-ghost) no-repeat center / contain;
     mask: var(--mem-ghost) no-repeat center / contain;
     transform: translate3d(var(--mem-drift-x, 0), var(--mem-drift-y, 0), 0);
-    /*
-     * Positive, so she drifts *down* while the page travels up — the small
-     * counter-motion that reads as distance. `--scroll-progress` is published
-     * on <html> by SkyBackdrop, which BaseLayout renders on every page, so
-     * there is no second scroll listener here.
-     */
-    translate: 0 calc(var(--scroll-progress, 0) * 4vh);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .memory__ghost {
-      translate: none;
-    }
   }
 
   .memory__eyebrow {
