@@ -121,7 +121,12 @@ const ARRIVAL_MS = 2600;
 const WORLD_AREA_PER_NODE = 15_000;
 const MIN_WORLD_SIDE = 620;
 
-const MIN_SCALE = 0.35;
+/*
+ * Low enough that the whole world always fits on the first frame, however big
+ * memory gets. The opening view is the overview, so the floor is set by what
+ * `fit()` needs rather than by what stays comfortable to read.
+ */
+const MIN_SCALE = 0.1;
 const MAX_SCALE = 2.6;
 /** Below this much pointer travel, a press is a click and not a drag. */
 const CLICK_SLOP = 4;
@@ -244,6 +249,14 @@ export async function createMemoryGraphView(
   let tx = 0;
   let ty = 0;
   let framed = false;
+  /**
+   * Keep re-framing while the layout is still moving.
+   *
+   * Framing once on arrival would frame a cloud of random start positions. The
+   * view instead follows the graph as it unfolds, so it is always whole, and
+   * lets go the moment the reader takes over or the physics goes quiet.
+   */
+  let autoFit = false;
 
   let frame = 0;
   let disposed = false;
@@ -314,8 +327,14 @@ export async function createMemoryGraphView(
       : Math.max(height - shownHeight, Math.min(0, ty));
   }
 
+  /** Any deliberate move hands the view over to the reader for good. */
+  function releaseAutoFit() {
+    autoFit = false;
+  }
+
   /** Zoom about a point on screen, so what is under the pointer stays put. */
   function zoomAbout(screenX: number, screenY: number, factor: number) {
+    releaseAutoFit();
     const worldX = toWorldX(screenX);
     const worldY = toWorldY(screenY);
     scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * factor));
@@ -324,26 +343,60 @@ export async function createMemoryGraphView(
     clampView();
   }
 
+  /** Padding kept around the content when framing it, in screen px. */
+  const FIT_PADDING = 26;
+
+  /**
+   * Frame the nodes — not the world.
+   *
+   * The world is sized for comfortable spacing when you are in among the
+   * nodes, so it is always larger than the cloud that settles inside it.
+   * Fitting the world left a third of the box empty and the graph off to one
+   * side; fitting what is actually drawn is what "see everything" means.
+   */
   function fit() {
     if (width === 0 || height === 0) return;
-    scale = Math.min(width / worldWidth, height / worldHeight);
+    if (nodes.length === 0) {
+      scale = Math.min(width / worldWidth, height / worldHeight);
+      clampView();
+      return;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const node of nodes) {
+      if (node.x - node.radius < minX) minX = node.x - node.radius;
+      if (node.y - node.radius < minY) minY = node.y - node.radius;
+      if (node.x + node.radius > maxX) maxX = node.x + node.radius;
+      if (node.y + node.radius > maxY) maxY = node.y + node.radius;
+    }
+    const spanX = Math.max(1, maxX - minX);
+    const spanY = Math.max(1, maxY - minY);
+    scale = Math.max(
+      MIN_SCALE,
+      Math.min(
+        MAX_SCALE,
+        Math.min((width - FIT_PADDING * 2) / spanX, (height - FIT_PADDING * 2) / spanY),
+      ),
+    );
+    tx = width / 2 - ((minX + maxX) / 2) * scale;
+    ty = height / 2 - ((minY + maxY) / 2) * scale;
     clampView();
   }
 
   /**
-   * The opening view.
+   * The opening view is the whole space.
    *
-   * Not "fit": on a phone that shrinks 120 nodes into an unreadable smudge,
-   * which is exactly the problem the pannable world exists to solve. Start at
-   * a size the labels can be read at, centred, and let the reader move — the
-   * fit button is there for the overview.
+   * It used to open at 1:1 so the labels were readable straight away, which
+   * meant landing somewhere inside a graph with no sense of its shape. Seeing
+   * everything first and then choosing where to go is the better order — the
+   * zoom buttons and the drag are right there.
    */
   function frameInitially() {
-    const fitScale = Math.min(width / worldWidth, height / worldHeight);
-    scale = Math.max(fitScale, Math.min(1, MAX_SCALE));
-    tx = width / 2 - (worldWidth / 2) * scale;
-    ty = height / 2 - (worldHeight / 2) * scale;
-    clampView();
+    fit();
+    autoFit = true;
   }
 
   function resize() {
@@ -474,6 +527,12 @@ export async function createMemoryGraphView(
     for (let i = 0; i < 240; i++) simulation.tick();
     clampToWorld();
     simulation.alpha(0);
+    // The frame taken before this ran was around the random start positions,
+    // and the loop will not tick again to correct it. Re-frame here.
+    if (autoFit) {
+      fit();
+      autoFit = false;
+    }
   }
 
   /** Nothing may leave the world, or the pan limits would hide it forever. */
@@ -494,6 +553,7 @@ export async function createMemoryGraphView(
   function focusOn(id: string) {
     const node = byId.get(id);
     if (!node) return;
+    releaseAutoFit();
     tx = width / 2 - node.x * scale;
     ty = height / 2 - node.y * scale;
     clampView();
@@ -732,6 +792,12 @@ export async function createMemoryGraphView(
     if (settling && (!reducedMotion || dragNode)) {
       simulation.tick();
       clampToWorld();
+      if (autoFit) {
+        fit();
+        // Let go once the layout has all but stopped, so the reader is not
+        // fighting a view that keeps re-centring under them.
+        if (simulation.alpha() <= 0.05) autoFit = false;
+      }
     }
     render();
     frame = requestAnimationFrame(loop);
@@ -767,6 +833,7 @@ export async function createMemoryGraphView(
     }
 
     pressTravel = 0;
+    releaseAutoFit();
     const found = nodeAt(point.x, point.y);
     if (found) {
       dragNode = found;
@@ -898,7 +965,10 @@ export async function createMemoryGraphView(
     zoomBy(factor: number) {
       zoomAbout(width / 2, height / 2, factor);
     },
-    fit,
+    fit() {
+      releaseAutoFit();
+      fit();
+    },
     resize,
     destroy() {
       disposed = true;
