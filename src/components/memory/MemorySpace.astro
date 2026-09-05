@@ -76,6 +76,12 @@ import {
       />
     </label>
 
+    <div class="memory__zoom" role="group" aria-label="Zoom">
+      <button type="button" id="mem-zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+      <button type="button" id="mem-zoom-fit" title="Fit the whole space">fit</button>
+      <button type="button" id="mem-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+    </div>
+
     <div class="memory__views" role="group" aria-label="View">
       <button type="button" id="mem-view-graph" class="memory__view is-active" aria-pressed="true">
         graph
@@ -89,6 +95,7 @@ import {
   <div class="memory__stage">
     <div class="memory__canvas-wrap" id="mem-graph-view">
       <canvas id="mem-canvas" aria-hidden="true"></canvas>
+      <p class="memory__hint">drag to move · pull a node loose · pinch or ⌘/ctrl+scroll to zoom</p>
       <p class="memory__empty" id="mem-empty" hidden>
         Nothing to show yet — either Bot-tan has not remembered enough, or her memory
         server is unreachable. The list view has the same data.
@@ -130,10 +137,11 @@ import {
   <div class="memory__legend">
     <h2 class="memory__legend-title">Legend</h2>
     <ul class="memory__legend-list">
-      <li><span class="memory__swatch memory__swatch--work" aria-hidden="true"></span> a work — a game, a show, a book</li>
-      <li><span class="memory__swatch memory__swatch--word" aria-hidden="true"></span> a word — anything else worth keeping</li>
-      <li><span class="memory__swatch memory__swatch--size" aria-hidden="true"></span> bigger = stronger impression</li>
-      <li><span class="memory__swatch memory__swatch--dashed-ring" aria-hidden="true"></span> dashed outline = not scored yet</li>
+      <li><span class="memory__swatch memory__swatch--work" aria-hidden="true"></span> blue hexagon = a work — a game, a show, a book</li>
+      <li><span class="memory__swatch memory__swatch--word" aria-hidden="true"></span> pink circle = a word — anything else worth keeping</li>
+      <li><span class="memory__swatch memory__swatch--size" aria-hidden="true"></span> bigger = came up more often</li>
+      <li><span class="memory__swatch memory__swatch--filled" aria-hidden="true"></span> more filled in = stronger impression</li>
+      <li><span class="memory__swatch memory__swatch--dashed-ring" aria-hidden="true"></span> hollow, dashed = impression not scored yet</li>
       <li><span class="memory__swatch memory__swatch--fade" aria-hidden="true"></span> brighter = remembered more recently</li>
       <li><span class="memory__swatch memory__swatch--solid" aria-hidden="true"></span> solid line = came up in the same conversation</li>
       <li><span class="memory__swatch memory__swatch--dashed" aria-hidden="true"></span> dashed line = close in meaning (embedding vectors)</li>
@@ -143,8 +151,9 @@ import {
   <p class="memory__note">
     Only public conversations are here, and only the words themselves — never what
     anyone said, who said it, or a link back to it. Things she was told in confidence
-    are remembered, but they never reach this page. The graph refreshes on its own
-    every minute; the server rebuilds it every ten.
+    are remembered, but they never reach this page. Drag the space to move around
+    it, or pull a node loose and let the rest follow. The graph refreshes on its
+    own every minute; the server rebuilds it every ten.
   </p>
 </section>
 
@@ -216,10 +225,10 @@ import {
           : `${node.salience} / 100${node.scoredCount > 0 ? ` (from ${node.scoredCount} scored)` : ''}`;
 
       readout.innerHTML = `
-        <p class="memory__readout-label">${escapeHtml(node.label)}</p>
+        <p class="memory__readout-label"><span class="memory__readout-mark memory__readout-mark--${node.kind}" aria-hidden="true"></span>${escapeHtml(node.label)}</p>
         ${node.spokenForm ? `<p class="memory__readout-spoken">she says it &ldquo;${escapeHtml(node.spokenForm)}&rdquo;</p>` : ''}
         <dl class="memory__readout-rows">
-          <dt>kind</dt><dd>${node.kind === 'work' ? 'a work' : 'a word'}</dd>
+          <dt>kind</dt><dd>${node.kind === 'work' ? 'a work (blue hexagon)' : 'a word (pink circle)'}</dd>
           <dt>impression</dt><dd>${escapeHtml(impression)}</dd>
           <dt>came up</dt><dd>${node.occurrences} times</dd>
           <dt>last seen</dt><dd>${escapeHtml(relative(node.latestAt))}</dd>
@@ -256,6 +265,9 @@ import {
         }
         const focusRow = () => {
           view?.select(node.id);
+          // Selecting from the list has to bring the node into the window — in
+          // a world you pan around it can easily be somewhere else entirely.
+          view?.focusOn(node.id);
           renderReadout(node);
         };
         row.addEventListener('focus', focusRow);
@@ -265,13 +277,8 @@ import {
     }
 
     function renderHud() {
-      if (hud.nodes) hud.nodes.textContent = String(graph.nodes.length);
-      if (hud.edges) {
-        const similar = graph.edges.filter((edge) => edge.type === 'similarity').length;
-        hud.edges.textContent = graph.similarityAvailable
-          ? `${graph.edges.length} (${similar} by meaning)`
-          : `${graph.edges.length} (co-occurrence only)`;
-      }
+      // The node and link counts belong to the view's onCountChange — it is the
+      // only thing that knows how much of the payload actually fit on screen.
       if (hud.synced) {
         hud.synced.textContent = graph.generatedAt
           ? new Date(graph.generatedAt).toLocaleTimeString(undefined, {
@@ -297,6 +304,14 @@ import {
       view = await createMemoryGraphView({
         canvas: canvas!,
         onSelect: renderReadout,
+        onCountChange: (counts) => {
+          if (hud.nodes) hud.nodes.textContent = String(counts.nodes);
+          if (hud.edges) {
+            hud.edges.textContent = graph.similarityAvailable
+              ? `${counts.edges} (${counts.similarEdges} by meaning)`
+              : `${counts.edges} (co-occurrence only)`;
+          }
+        },
         reducedMotion,
       });
       await refresh();
@@ -340,6 +355,10 @@ import {
 
     graphButton?.addEventListener('click', () => showView('graph'));
     listButton?.addEventListener('click', () => showView('list'));
+
+    document.getElementById('mem-zoom-in')?.addEventListener('click', () => view?.zoomBy(1.3));
+    document.getElementById('mem-zoom-out')?.addEventListener('click', () => view?.zoomBy(1 / 1.3));
+    document.getElementById('mem-zoom-fit')?.addEventListener('click', () => view?.fit());
 
     // The physics bundle only loads once the space is actually on screen.
     const observer = new IntersectionObserver((entries, self) => {
@@ -545,6 +564,53 @@ import {
     outline-offset: -2px;
   }
 
+  .memory__zoom {
+    display: flex;
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 65%, transparent);
+    border-radius: var(--mem-radius);
+    overflow: hidden;
+  }
+
+  .memory__zoom button {
+    appearance: none;
+    border: 0;
+    border-right: 1px solid color-mix(in srgb, var(--mem-edge) 45%, transparent);
+    background: var(--mem-panel);
+    color: var(--mem-text-soft);
+    font-family: inherit;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    padding: 0.5rem 0.85rem;
+    cursor: pointer;
+    min-width: 2.6rem;
+  }
+
+  .memory__zoom button:last-child {
+    border-right: 0;
+  }
+
+  .memory__zoom button:hover {
+    color: var(--mem-text);
+    background: color-mix(in srgb, var(--mem-work) 22%, var(--mem-panel));
+  }
+
+  .memory__zoom button:focus-visible {
+    outline: 2px solid var(--mem-highlight);
+    outline-offset: -2px;
+  }
+
+  .memory__hint {
+    flex: none;
+    margin: 0;
+    padding: 0.4rem 0.7rem;
+    border-top: 1px solid color-mix(in srgb, var(--mem-edge) 35%, transparent);
+    background: color-mix(in srgb, var(--mem-panel) 70%, transparent);
+    color: color-mix(in srgb, var(--mem-text-soft) 75%, transparent);
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
   .memory__stage {
     margin-top: 1rem;
     display: grid;
@@ -567,13 +633,23 @@ import {
   .memory__canvas-wrap {
     height: min(70vh, 40rem);
     overflow: hidden;
+    /* The hint is a caption under the canvas, not a sticker on top of it —
+       floating over the space it describes, it lands on the nodes. */
+    display: flex;
+    flex-direction: column;
   }
 
   #mem-canvas {
     display: block;
+    flex: 1;
     width: 100%;
-    height: 100%;
-    touch-action: pan-y;
+    min-height: 0;
+    /*
+     * The canvas handles its own drag and pinch, so the browser must not also
+     * scroll or zoom the page from gestures that start here. The box is well
+     * short of the viewport height, which leaves page either side to scroll.
+     */
+    touch-action: none;
   }
 
   .memory__empty {
@@ -653,6 +729,23 @@ import {
     margin: 0;
     color: var(--mem-text-soft);
     line-height: 1.8;
+  }
+
+  .memory__readout :global(.memory__readout-mark) {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.45rem;
+    vertical-align: baseline;
+    border: 1.5px solid var(--mem-word);
+    border-radius: 50%;
+  }
+
+  .memory__readout :global(.memory__readout-mark--work) {
+    border: 0;
+    border-radius: 0;
+    background: var(--mem-work);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   }
 
   .memory__readout :global(.memory__readout-label) {
@@ -750,6 +843,7 @@ import {
   .memory__swatch--word::before,
   .memory__swatch--size::before,
   .memory__swatch--dashed-ring::before,
+  .memory__swatch--filled::before,
   .memory__swatch--fade::before {
     content: '';
     position: absolute;
@@ -777,6 +871,12 @@ import {
     border-radius: 50%;
     width: 1rem;
     height: 1rem;
+  }
+
+  .memory__swatch--filled::before {
+    color: var(--mem-word);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--mem-word) 55%, transparent);
   }
 
   .memory__swatch--dashed-ring::before {
