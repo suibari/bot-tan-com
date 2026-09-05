@@ -185,6 +185,7 @@ import {
   const empty = document.getElementById('mem-empty');
   const graphButton = document.getElementById('mem-view-graph');
   const listButton = document.getElementById('mem-view-list');
+  const ghost = graphView?.querySelector<HTMLElement>('.memory__ghost') ?? null;
 
   const hud = {
     link: document.getElementById('mem-link'),
@@ -200,6 +201,25 @@ import {
     let graph: MemoryGraph = EMPTY_MEMORY_GRAPH;
     let view: MemoryGraphView | null = null;
     let pollTimer: ReturnType<typeof setInterval> | undefined;
+    let ghostDriftX = 0;
+    let ghostDriftY = 0;
+
+    // Bot-tan is far behind the graph: she travels against the foreground at
+    // only a fraction of its speed. The cap keeps repeated pans from carrying
+    // the contained figure completely outside its window.
+    const GHOST_DRIFT_RATIO = 0.15;
+    const GHOST_DRIFT_LIMIT = 48;
+
+    function setGhostDrift(x: number, y: number) {
+      ghostDriftX = Math.max(-GHOST_DRIFT_LIMIT, Math.min(GHOST_DRIFT_LIMIT, x));
+      ghostDriftY = Math.max(-GHOST_DRIFT_LIMIT, Math.min(GHOST_DRIFT_LIMIT, y));
+      ghost?.style.setProperty('--mem-drift-x', `${ghostDriftX}px`);
+      ghost?.style.setProperty('--mem-drift-y', `${ghostDriftY}px`);
+    }
+
+    function resetGhostDrift() {
+      setGhostDrift(0, 0);
+    }
 
     const relative = (iso: string): string => {
       const at = Date.parse(iso);
@@ -280,6 +300,7 @@ import {
           // Selecting from the list has to bring the node into the window — in
           // a world you pan around it can easily be somewhere else entirely.
           view?.focusOn(node.id);
+          resetGhostDrift();
           renderReadout(node);
         };
         row.addEventListener('focus', focusRow);
@@ -323,6 +344,12 @@ import {
               ? `${counts.edges} (${counts.similarEdges} by meaning)`
               : `${counts.edges} (co-occurrence only)`;
           }
+        },
+        onPan: (deltaX, deltaY) => {
+          setGhostDrift(
+            ghostDriftX - deltaX * GHOST_DRIFT_RATIO,
+            ghostDriftY - deltaY * GHOST_DRIFT_RATIO,
+          );
         },
         reducedMotion,
       });
@@ -370,7 +397,10 @@ import {
 
     document.getElementById('mem-zoom-in')?.addEventListener('click', () => view?.zoomBy(1.3));
     document.getElementById('mem-zoom-out')?.addEventListener('click', () => view?.zoomBy(1 / 1.3));
-    document.getElementById('mem-zoom-fit')?.addEventListener('click', () => view?.fit());
+    document.getElementById('mem-zoom-fit')?.addEventListener('click', () => {
+      view?.fit();
+      resetGhostDrift();
+    });
 
     // The physics bundle only loads once the space is actually on screen.
     const observer = new IntersectionObserver((entries, self) => {
@@ -465,6 +495,7 @@ import {
      */
     -webkit-mask: var(--mem-ghost) no-repeat center / contain;
     mask: var(--mem-ghost) no-repeat center / contain;
+    transform: translate3d(var(--mem-drift-x, 0), var(--mem-drift-y, 0), 0);
     /*
      * Positive, so she drifts *down* while the page travels up — the small
      * counter-motion that reads as distance. `--scroll-progress` is published

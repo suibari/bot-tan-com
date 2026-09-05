@@ -160,6 +160,8 @@ export interface MemoryGraphViewOptions {
   onSelect(node: MemoryNode | null): void;
   /** Called when the payload changes, so the HUD can report it. */
   onCountChange(counts: MemoryGraphCounts): void;
+  /** Reports the canvas window's actual movement during a background pan. */
+  onPan?(deltaX: number, deltaY: number): void;
   /** True when the viewer asked for reduced motion. */
   reducedMotion: boolean;
 }
@@ -222,7 +224,7 @@ function withAlpha(hex: string, alpha: number): string {
 export async function createMemoryGraphView(
   options: MemoryGraphViewOptions,
 ): Promise<MemoryGraphView> {
-  const { canvas, onSelect, onCountChange, reducedMotion } = options;
+  const { canvas, onSelect, onCountChange, onPan, reducedMotion } = options;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D canvas context unavailable');
 
@@ -881,9 +883,12 @@ export async function createMemoryGraphView(
     }
 
     if (panning) {
+      const previousTx = tx;
+      const previousTy = ty;
       tx = panFrom.tx + (point.x - panFrom.x);
       ty = panFrom.ty + (point.y - panFrom.y);
       clampView();
+      onPan?.(tx - previousTx, ty - previousTy);
       return;
     }
 
