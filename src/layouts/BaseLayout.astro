@@ -8,12 +8,24 @@ import { useTranslations, localizedPath, bcp47, LOCALES, type Lang } from '../i1
 
 interface Props {
   lang: Lang;
+  /** Path within the locale, e.g. `/memory`. Defaults to the home page. */
+  path?: string;
+  /**
+   * Set on a page that exists in one locale only. Without it the layout would
+   * emit `hreflang` links to sibling URLs that were never built.
+   */
+  standalone?: boolean;
+  /** Overrides the site-wide title/description for a subpage. */
+  title?: string;
+  description?: string;
 }
 
-const { lang } = Astro.props;
+const { lang, path = '/', standalone = false, title, description } = Astro.props;
 const t = useTranslations(lang);
 
-const canonical = new URL(localizedPath(lang), Astro.site).href;
+const pageTitle = title ?? t.meta.title;
+const pageDescription = description ?? t.meta.description;
+const canonical = new URL(localizedPath(lang, path), Astro.site).href;
 const ogImage = new URL('/ogp.png', Astro.site).href;
 ---
 
@@ -24,20 +36,21 @@ const ogImage = new URL('/ogp.png', Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
 
-    <title>{t.meta.title}</title>
-    <meta name="description" content={t.meta.description} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
 
     {
-      LOCALES.map((locale) => (
-        <link
-          rel="alternate"
-          hreflang={bcp47[locale]}
-          href={new URL(localizedPath(locale), Astro.site).href}
-        />
-      ))
+      !standalone &&
+        LOCALES.map((locale) => (
+          <link
+            rel="alternate"
+            hreflang={bcp47[locale]}
+            href={new URL(localizedPath(locale, path), Astro.site).href}
+          />
+        ))
     }
-    <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site).href} />
+    {!standalone && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site).href} />}
 
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192" />
@@ -46,8 +59,8 @@ const ogImage = new URL('/ogp.png', Astro.site).href;
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={t.meta.title} />
-    <meta property="og:title" content={t.meta.title} />
-    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:alt" content={t.meta.ogAlt} />

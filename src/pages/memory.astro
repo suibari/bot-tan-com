@@ -1,0 +1,21 @@
+---
+/**
+ * A single, English-only page. The rest of the site is localised into ja/en/sv,
+ * but the memory itself is Japanese text with an English frame around it, so
+ * translating the frame three ways would only give three routes to the same
+ * screen. It carries `standalone` so BaseLayout does not advertise siblings
+ * that do not exist.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MemorySpace from '../components/memory/MemorySpace.astro';
+---
+
+<BaseLayout
+  lang="en"
+  path="/memory"
+  standalone
+  title="Bot-tan's Memory"
+  description="A live wireframe of what Bot-tan remembers: the words that stuck, how strongly, how recently, and what she thinks belongs together."
+>
+  <MemorySpace />
+</BaseLayout>

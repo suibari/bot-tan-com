@@ -13,6 +13,7 @@ export const ja: Dictionary = {
     dashboard: 'きもち',
     friends: 'なかまたち',
     links: 'リンク',
+    memory: "Bot-tan's Memory",
     switchTo: 'English',
     skipToContent: '本文へスキップ',
   },

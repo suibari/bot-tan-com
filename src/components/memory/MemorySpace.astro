@@ -1,0 +1,829 @@
+---
+/**
+ * "Bot-tan's Memory" — the wireframe space at /memory.
+ *
+ * Deliberately English-only and deliberately off-brand: the rest of the site is
+ * a cream sketchbook, and this page is the inside of Bot-tan's head. It scopes
+ * its own dark tokens rather than touching `global.css`, which every other page
+ * shares.
+ *
+ * Everything drawn here comes from the public `/memory-graph` endpoint, which
+ * publishes impression labels and their aggregates and nothing else — no
+ * conversation text, no links back to anyone's posts.
+ */
+import {
+  EDGE_COLOR,
+  GRID_COLOR,
+  HIGHLIGHT,
+  KIND_COLORS,
+  PANEL,
+  SURFACE,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+} from '../../lib/memoryTheme';
+---
+
+<section
+  class="memory"
+  style={`--mem-surface:${SURFACE};--mem-panel:${PANEL};--mem-text:${TEXT_PRIMARY};--mem-text-soft:${TEXT_SECONDARY};--mem-grid:${GRID_COLOR};--mem-work:${KIND_COLORS.work};--mem-word:${KIND_COLORS.word};--mem-edge:${EDGE_COLOR};--mem-highlight:${HIGHLIGHT};`}
+>
+  <header class="memory__head">
+    <p class="memory__eyebrow">bot-tan / memory</p>
+    <h1 class="memory__title">Bot-tan's Memory</h1>
+    <p class="memory__lead">
+      Every conversation Bot-tan has leaves a few words behind. This is what stuck: the
+      things she found memorable, how strongly, how recently, and which of them she
+      thinks belong together.
+    </p>
+  </header>
+
+  <div class="memory__hud" role="status">
+    <div class="memory__hud-cell">
+      <span class="memory__hud-key">link</span>
+      <span class="memory__hud-value" id="mem-link">connecting…</span>
+    </div>
+    <div class="memory__hud-cell">
+      <span class="memory__hud-key">state</span>
+      <span class="memory__hud-value" id="mem-state">—</span>
+    </div>
+    <div class="memory__hud-cell memory__hud-cell--wide">
+      <span class="memory__hud-key">doing</span>
+      <span class="memory__hud-value" id="mem-mood">—</span>
+    </div>
+    <div class="memory__hud-cell">
+      <span class="memory__hud-key">nodes</span>
+      <span class="memory__hud-value" id="mem-nodes">—</span>
+    </div>
+    <div class="memory__hud-cell">
+      <span class="memory__hud-key">links</span>
+      <span class="memory__hud-value" id="mem-edges">—</span>
+    </div>
+    <div class="memory__hud-cell">
+      <span class="memory__hud-key">synced</span>
+      <span class="memory__hud-value" id="mem-synced">—</span>
+    </div>
+  </div>
+
+  <div class="memory__controls">
+    <label class="memory__search">
+      <span class="memory__search-label">filter</span>
+      <input
+        type="search"
+        id="mem-search"
+        placeholder="type a word…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </label>
+
+    <div class="memory__views" role="group" aria-label="View">
+      <button type="button" id="mem-view-graph" class="memory__view is-active" aria-pressed="true">
+        graph
+      </button>
+      <button type="button" id="mem-view-list" class="memory__view" aria-pressed="false">
+        list
+      </button>
+    </div>
+  </div>
+
+  <div class="memory__stage">
+    <div class="memory__canvas-wrap" id="mem-graph-view">
+      <canvas id="mem-canvas" aria-hidden="true"></canvas>
+      <p class="memory__empty" id="mem-empty" hidden>
+        Nothing to show yet — either Bot-tan has not remembered enough, or her memory
+        server is unreachable. The list view has the same data.
+      </p>
+    </div>
+
+    <!--
+      The canvas is invisible to assistive tech, so the same rows exist as real
+      markup. It is a view toggle rather than a hidden fallback: reading the
+      numbers is often what you actually came here to do.
+    -->
+    <div class="memory__list" id="mem-list-view" hidden>
+      <table class="memory__table">
+        <caption class="memory__table-caption">
+          Ordered the way Bot-tan ranks a memory: impression first, then how
+          recently and how often it came up.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">word</th>
+            <th scope="col">kind</th>
+            <th scope="col">impression</th>
+            <th scope="col">times</th>
+            <th scope="col">last seen</th>
+            <th scope="col">connected to</th>
+          </tr>
+        </thead>
+        <tbody id="mem-list-body"></tbody>
+      </table>
+    </div>
+
+    <aside class="memory__readout" id="mem-readout" aria-live="polite">
+      <p class="memory__readout-hint">
+        Point at a node — or pick a row in the list — to read what Bot-tan knows about it.
+      </p>
+    </aside>
+  </div>
+
+  <div class="memory__legend">
+    <h2 class="memory__legend-title">Legend</h2>
+    <ul class="memory__legend-list">
+      <li><span class="memory__swatch memory__swatch--work" aria-hidden="true"></span> a work — a game, a show, a book</li>
+      <li><span class="memory__swatch memory__swatch--word" aria-hidden="true"></span> a word — anything else worth keeping</li>
+      <li><span class="memory__swatch memory__swatch--size" aria-hidden="true"></span> bigger = stronger impression</li>
+      <li><span class="memory__swatch memory__swatch--dashed-ring" aria-hidden="true"></span> dashed outline = not scored yet</li>
+      <li><span class="memory__swatch memory__swatch--fade" aria-hidden="true"></span> brighter = remembered more recently</li>
+      <li><span class="memory__swatch memory__swatch--solid" aria-hidden="true"></span> solid line = came up in the same conversation</li>
+      <li><span class="memory__swatch memory__swatch--dashed" aria-hidden="true"></span> dashed line = close in meaning (embedding vectors)</li>
+    </ul>
+  </div>
+
+  <p class="memory__note">
+    Only public conversations are here, and only the words themselves — never what
+    anyone said, who said it, or a link back to it. Things she was told in confidence
+    are remembered, but they never reach this page. The graph refreshes on its own
+    every minute; the server rebuilds it every ten.
+  </p>
+</section>
+
+<script>
+  import { connectBotStatus, type BotStatusPayload, type ConnectionState } from '../../lib/botStatus';
+  import { fetchMemoryGraph, EMPTY_MEMORY_GRAPH, type MemoryGraph, type MemoryNode } from '../../lib/botMemoryGraph';
+  import { createMemoryGraphView, type MemoryGraphView } from '../../lib/memoryGraphCanvas';
+
+  const POLL_MS = 60_000;
+
+  const canvas = document.getElementById('mem-canvas') as HTMLCanvasElement | null;
+  const search = document.getElementById('mem-search') as HTMLInputElement | null;
+  const listBody = document.getElementById('mem-list-body');
+  const listView = document.getElementById('mem-list-view');
+  const graphView = document.getElementById('mem-graph-view');
+  const readout = document.getElementById('mem-readout');
+  const empty = document.getElementById('mem-empty');
+  const graphButton = document.getElementById('mem-view-graph');
+  const listButton = document.getElementById('mem-view-list');
+
+  const hud = {
+    link: document.getElementById('mem-link'),
+    state: document.getElementById('mem-state'),
+    mood: document.getElementById('mem-mood'),
+    nodes: document.getElementById('mem-nodes'),
+    edges: document.getElementById('mem-edges'),
+    synced: document.getElementById('mem-synced'),
+  };
+
+  if (canvas) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let graph: MemoryGraph = EMPTY_MEMORY_GRAPH;
+    let view: MemoryGraphView | null = null;
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+
+    const relative = (iso: string): string => {
+      const at = Date.parse(iso);
+      if (!Number.isFinite(at)) return '—';
+      const days = Math.floor((Date.now() - at) / 86_400_000);
+      if (days <= 0) return 'today';
+      if (days === 1) return 'yesterday';
+      if (days < 30) return `${days} days ago`;
+      const months = Math.round(days / 30);
+      return months < 12 ? `${months} months ago` : `${Math.round(days / 365)} years ago`;
+    };
+
+    const neighboursOf = (id: string): string[] => {
+      const found: string[] = [];
+      for (const edge of graph.edges) {
+        if (edge.source === id) found.push(edge.target);
+        else if (edge.target === id) found.push(edge.source);
+      }
+      return found;
+    };
+
+    const labelOf = (id: string) => graph.nodes.find((node) => node.id === id)?.label ?? id;
+
+    function renderReadout(node: MemoryNode | null) {
+      if (!readout) return;
+      if (!node) {
+        readout.innerHTML =
+          '<p class="memory__readout-hint">Point at a node — or pick a row in the list — to read what Bot-tan knows about it.</p>';
+        return;
+      }
+      const linked = neighboursOf(node.id).map(labelOf);
+      const impression =
+        node.salience === null
+          ? 'not scored yet'
+          : `${node.salience} / 100${node.scoredCount > 0 ? ` (from ${node.scoredCount} scored)` : ''}`;
+
+      readout.innerHTML = `
+        <p class="memory__readout-label">${escapeHtml(node.label)}</p>
+        ${node.spokenForm ? `<p class="memory__readout-spoken">she says it &ldquo;${escapeHtml(node.spokenForm)}&rdquo;</p>` : ''}
+        <dl class="memory__readout-rows">
+          <dt>kind</dt><dd>${node.kind === 'work' ? 'a work' : 'a word'}</dd>
+          <dt>impression</dt><dd>${escapeHtml(impression)}</dd>
+          <dt>came up</dt><dd>${node.occurrences} times</dd>
+          <dt>last seen</dt><dd>${escapeHtml(relative(node.latestAt))}</dd>
+        </dl>
+        ${linked.length > 0 ? `<p class="memory__readout-linked"><span>connected to</span> ${linked.map((l) => `<em>${escapeHtml(l)}</em>`).join(', ')}</p>` : ''}
+      `;
+    }
+
+    function escapeHtml(value: string): string {
+      const div = document.createElement('div');
+      div.textContent = value;
+      return div.innerHTML;
+    }
+
+    function renderList() {
+      if (!listBody) return;
+      listBody.textContent = '';
+      for (const node of graph.nodes) {
+        const row = document.createElement('tr');
+        row.tabIndex = 0;
+        row.dataset.id = node.id;
+        const cells = [
+          node.spokenForm ? `${node.label} (${node.spokenForm})` : node.label,
+          node.kind === 'work' ? 'work' : 'word',
+          node.salience === null ? 'not scored' : String(node.salience),
+          String(node.occurrences),
+          relative(node.latestAt),
+          neighboursOf(node.id).map(labelOf).join(', ') || '—',
+        ];
+        for (const value of cells) {
+          const cell = document.createElement('td');
+          cell.textContent = value;
+          row.append(cell);
+        }
+        const focusRow = () => {
+          view?.select(node.id);
+          renderReadout(node);
+        };
+        row.addEventListener('focus', focusRow);
+        row.addEventListener('mouseenter', focusRow);
+        listBody.append(row);
+      }
+    }
+
+    function renderHud() {
+      if (hud.nodes) hud.nodes.textContent = String(graph.nodes.length);
+      if (hud.edges) {
+        const similar = graph.edges.filter((edge) => edge.type === 'similarity').length;
+        hud.edges.textContent = graph.similarityAvailable
+          ? `${graph.edges.length} (${similar} by meaning)`
+          : `${graph.edges.length} (co-occurrence only)`;
+      }
+      if (hud.synced) {
+        hud.synced.textContent = graph.generatedAt
+          ? new Date(graph.generatedAt).toLocaleTimeString(undefined, {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : '—';
+      }
+      if (empty) empty.hidden = graph.nodes.length > 0;
+    }
+
+    async function refresh() {
+      const next = await fetchMemoryGraph();
+      // A failed poll must not wipe a graph that is already on screen.
+      if (next.nodes.length === 0 && graph.nodes.length > 0) return;
+      graph = next;
+      view?.update(graph);
+      renderList();
+      renderHud();
+    }
+
+    async function boot() {
+      view = await createMemoryGraphView({
+        canvas: canvas!,
+        onSelect: renderReadout,
+        reducedMotion,
+      });
+      await refresh();
+      startPolling();
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(() => void refresh(), POLL_MS);
+    }
+
+    function stopPolling() {
+      if (pollTimer !== undefined) clearInterval(pollTimer);
+      pollTimer = undefined;
+    }
+
+    // Nothing here is worth a request or a repaint while the tab is hidden.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopPolling();
+      else {
+        void refresh();
+        startPolling();
+      }
+    });
+
+    search?.addEventListener('input', () => {
+      view?.setFilter(search.value);
+    });
+
+    function showView(which: 'graph' | 'list') {
+      const isGraph = which === 'graph';
+      if (graphView) graphView.hidden = !isGraph;
+      if (listView) listView.hidden = isGraph;
+      graphButton?.classList.toggle('is-active', isGraph);
+      listButton?.classList.toggle('is-active', !isGraph);
+      graphButton?.setAttribute('aria-pressed', String(isGraph));
+      listButton?.setAttribute('aria-pressed', String(!isGraph));
+      // The canvas was display:none, so it has no box to measure until now.
+      if (isGraph) view?.resize();
+    }
+
+    graphButton?.addEventListener('click', () => showView('graph'));
+    listButton?.addEventListener('click', () => showView('list'));
+
+    // The physics bundle only loads once the space is actually on screen.
+    const observer = new IntersectionObserver((entries, self) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        self.disconnect();
+        void boot();
+      }
+    }, { rootMargin: '160px' });
+    observer.observe(canvas);
+
+    // The live status line is the same socket the dashboard uses.
+    const stateWords: Record<ConnectionState, string> = {
+      connecting: 'connecting…',
+      open: 'live',
+      closed: 'offline',
+      error: 'offline',
+    };
+    connectBotStatus({
+      onStateChange: (state) => {
+        if (hud.link) hud.link.textContent = stateWords[state];
+      },
+      onMessage: (payload: BotStatusPayload) => {
+        if (hud.state) {
+          hud.state.textContent = payload.status
+            ? `${payload.status}${typeof payload.energy === 'number' ? ` · ${payload.energy}%` : ''}`
+            : '—';
+        }
+        if (hud.mood) hud.mood.textContent = payload.mood_en || payload.mood || '—';
+      },
+    });
+  }
+</script>
+
+<style>
+  /*
+   * Every token below is scoped to `.memory`. The site's own light tokens stay
+   * untouched — the header and footer above and below this section keep looking
+   * like themselves.
+   */
+  .memory {
+    --mem-radius: 0.4rem;
+    position: relative;
+    margin: -1px 0 0;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #101d2c 0%, var(--mem-surface) 62%),
+      var(--mem-surface);
+    color: var(--mem-text);
+    font-family: var(--font-dot), monospace;
+    min-height: 100vh;
+  }
+
+  .memory::before {
+    /* Faint scanlines. Purely atmosphere, so it never eats a pointer event. */
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  .memory > * {
+    position: relative;
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  .memory__eyebrow {
+    margin: 0;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--mem-work);
+  }
+
+  .memory__title {
+    margin: 0.4rem 0 0.8rem;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    letter-spacing: 0.04em;
+    font-weight: 400;
+  }
+
+  .memory__lead {
+    margin: 0;
+    max-width: 44rem;
+    line-height: 1.9;
+    color: var(--mem-text-soft);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+  }
+
+  .memory__hud {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px;
+    background: color-mix(in srgb, var(--mem-edge) 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 55%, transparent);
+    border-radius: var(--mem-radius);
+    overflow: hidden;
+  }
+
+  .memory__hud-cell {
+    background: var(--mem-panel);
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .memory__hud-cell--wide {
+    grid-column: span 2;
+  }
+
+  .memory__hud-key {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--mem-text-soft) 80%, transparent);
+  }
+
+  .memory__hud-value {
+    font-size: 0.9rem;
+    color: var(--mem-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .memory__controls {
+    margin-top: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .memory__search {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1 1 16rem;
+  }
+
+  .memory__search-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mem-text-soft);
+  }
+
+  .memory__search input {
+    flex: 1;
+    min-width: 0;
+    background: var(--mem-panel);
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 65%, transparent);
+    border-radius: var(--mem-radius);
+    padding: 0.5rem 0.7rem;
+    color: var(--mem-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  .memory__search input:focus-visible {
+    outline: 2px solid var(--mem-highlight);
+    outline-offset: 1px;
+  }
+
+  .memory__views {
+    display: flex;
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 65%, transparent);
+    border-radius: var(--mem-radius);
+    overflow: hidden;
+  }
+
+  .memory__view {
+    appearance: none;
+    border: 0;
+    background: var(--mem-panel);
+    color: var(--mem-text-soft);
+    font-family: inherit;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+
+  .memory__view.is-active {
+    background: color-mix(in srgb, var(--mem-work) 30%, var(--mem-panel));
+    color: var(--mem-text);
+  }
+
+  .memory__view:focus-visible {
+    outline: 2px solid var(--mem-highlight);
+    outline-offset: -2px;
+  }
+
+  .memory__stage {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .memory__canvas-wrap,
+  .memory__list {
+    grid-column: 1;
+    grid-row: 1;
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 55%, transparent);
+    border-radius: var(--mem-radius);
+    background: color-mix(in srgb, var(--mem-panel) 55%, transparent);
+    min-height: 26rem;
+  }
+
+  .memory__canvas-wrap {
+    height: min(70vh, 40rem);
+    overflow: hidden;
+  }
+
+  #mem-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: pan-y;
+  }
+
+  .memory__empty {
+    position: absolute;
+    inset: auto 2rem 2rem;
+    margin: 0;
+    text-align: center;
+    color: var(--mem-text-soft);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .memory__list {
+    max-height: min(70vh, 40rem);
+    overflow: auto;
+    padding: 0.5rem;
+  }
+
+  .memory__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .memory__table-caption {
+    caption-side: top;
+    text-align: left;
+    padding: 0.4rem 0.5rem 0.8rem;
+    color: var(--mem-text-soft);
+    font-family: var(--font-body);
+  }
+
+  .memory__table th,
+  .memory__table td {
+    text-align: left;
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--mem-edge) 32%, transparent);
+    vertical-align: top;
+  }
+
+  .memory__table th {
+    position: sticky;
+    top: 0;
+    background: var(--mem-panel);
+    color: var(--mem-text-soft);
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+  }
+
+  .memory__table tbody tr:hover,
+  .memory__table tbody tr:focus-visible {
+    background: color-mix(in srgb, var(--mem-highlight) 12%, transparent);
+    outline: none;
+  }
+
+  .memory__table td:last-child {
+    color: var(--mem-text-soft);
+    max-width: 16rem;
+  }
+
+  .memory__readout {
+    grid-column: 2;
+    grid-row: 1;
+    border: 1px solid color-mix(in srgb, var(--mem-edge) 55%, transparent);
+    border-radius: var(--mem-radius);
+    background: var(--mem-panel);
+    padding: 1rem;
+    min-height: 12rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+  }
+
+  .memory__readout-hint {
+    margin: 0;
+    color: var(--mem-text-soft);
+    line-height: 1.8;
+  }
+
+  .memory__readout :global(.memory__readout-label) {
+    margin: 0;
+    font-family: var(--font-dot), monospace;
+    font-size: 1.15rem;
+    color: var(--mem-text);
+    word-break: break-word;
+  }
+
+  .memory__readout :global(.memory__readout-spoken) {
+    margin: 0.2rem 0 0;
+    color: var(--mem-word);
+    font-size: 0.8rem;
+  }
+
+  .memory__readout :global(.memory__readout-rows) {
+    margin: 0.9rem 0 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 0.8rem;
+  }
+
+  .memory__readout :global(.memory__readout-rows dt) {
+    color: var(--mem-text-soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    align-self: center;
+  }
+
+  .memory__readout :global(.memory__readout-rows dd) {
+    margin: 0;
+    color: var(--mem-text);
+  }
+
+  .memory__readout :global(.memory__readout-linked) {
+    margin: 0.9rem 0 0;
+    line-height: 1.8;
+    color: var(--mem-text);
+  }
+
+  .memory__readout :global(.memory__readout-linked span) {
+    display: block;
+    color: var(--mem-text-soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .memory__readout :global(.memory__readout-linked em) {
+    font-style: normal;
+    color: var(--mem-highlight);
+  }
+
+  .memory__legend {
+    margin-top: 1.5rem;
+  }
+
+  .memory__legend-title {
+    margin: 0 0 0.6rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mem-text-soft);
+    font-weight: 400;
+  }
+
+  .memory__legend-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.5rem 1.5rem;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--mem-text-soft);
+  }
+
+  .memory__legend-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .memory__swatch {
+    flex: none;
+    width: 1.4rem;
+    height: 1rem;
+    position: relative;
+  }
+
+  .memory__swatch--work::before,
+  .memory__swatch--word::before,
+  .memory__swatch--size::before,
+  .memory__swatch--dashed-ring::before,
+  .memory__swatch--fade::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    margin: auto;
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1.5px solid currentColor;
+  }
+
+  .memory__swatch--work::before {
+    color: var(--mem-work);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: color-mix(in srgb, var(--mem-work) 18%, transparent);
+    border: 0;
+  }
+
+  .memory__swatch--word::before {
+    color: var(--mem-word);
+    border-radius: 50%;
+  }
+
+  .memory__swatch--size::before {
+    color: var(--mem-word);
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .memory__swatch--dashed-ring::before {
+    color: var(--mem-word);
+    border-radius: 50%;
+    border-style: dashed;
+  }
+
+  .memory__swatch--fade::before {
+    color: var(--mem-work);
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+
+  .memory__swatch--solid::after,
+  .memory__swatch--dashed::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    border-top: 2px solid var(--mem-edge);
+  }
+
+  .memory__swatch--dashed::after {
+    border-top-style: dashed;
+  }
+
+  .memory__note {
+    margin-top: 2rem;
+    max-width: 44rem;
+    color: color-mix(in srgb, var(--mem-text-soft) 85%, transparent);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    line-height: 1.9;
+  }
+
+  @media (max-width: 60rem) {
+    .memory__stage {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .memory__readout {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .memory__hud-cell--wide {
+      grid-column: span 1;
+    }
+  }
+</style>

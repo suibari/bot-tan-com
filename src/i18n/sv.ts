@@ -13,6 +13,7 @@ export const sv: Dictionary = {
     dashboard: 'Mood',
     friends: 'Vänner',
     links: 'Länkar',
+    memory: "Bot-tan's Memory",
     switchTo: '日本語',
     skipToContent: 'Skippa till innehållet',
   },

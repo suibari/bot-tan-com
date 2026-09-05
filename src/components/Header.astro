@@ -10,9 +10,14 @@ interface Props {
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 
+/*
+ * Hash links land on the current page; /memory is a real route, so it is built
+ * with localizedPath rather than assumed to be an anchor.
+ */
 const sections = [
   { href: '#about', label: t.nav.about },
   { href: '#dashboard', label: t.nav.dashboard },
+  { href: localizedPath(lang, '/memory'), label: t.nav.memory },
   { href: '#friends', label: t.nav.friends },
   { href: '#links', label: t.nav.links },
 ];

@@ -13,6 +13,7 @@ export const en: Dictionary = {
     dashboard: 'Mood',
     friends: 'Friends',
     links: 'Links',
+    memory: "Bot-tan's Memory",
     switchTo: '日本語',
     skipToContent: 'Skip to content',
   },
