@@ -11,6 +11,7 @@
  * publishes impression labels and their aggregates and nothing else — no
  * conversation text, no links back to anyone's posts.
  */
+import botIconLine from '../../assets/brand/bot-icon-line.png';
 import {
   EDGE_COLOR,
   GRID_COLOR,
@@ -25,8 +26,16 @@ import {
 
 <section
   class="memory"
-  style={`--mem-surface:${SURFACE};--mem-panel:${PANEL};--mem-text:${TEXT_PRIMARY};--mem-text-soft:${TEXT_SECONDARY};--mem-grid:${GRID_COLOR};--mem-work:${KIND_COLORS.work};--mem-word:${KIND_COLORS.word};--mem-edge:${EDGE_COLOR};--mem-highlight:${HIGHLIGHT};`}
+  style={`--mem-surface:${SURFACE};--mem-panel:${PANEL};--mem-text:${TEXT_PRIMARY};--mem-text-soft:${TEXT_SECONDARY};--mem-grid:${GRID_COLOR};--mem-work:${KIND_COLORS.work};--mem-word:${KIND_COLORS.word};--mem-edge:${EDGE_COLOR};--mem-highlight:${HIGHLIGHT};--mem-ghost:url("${botIconLine.src}");`}
 >
+  <!--
+    Bot-tan herself, far behind the wireframe. The source is the line art the
+    Nagi client uses (bot_icon_trans.png); its interior is genuinely
+    transparent, so masking it recolours the strokes rather than stamping a
+    silhouette. She drifts down as the page scrolls up — the parallax of
+    something a long way off.
+  -->
+  <div class="memory__ghost-rail" aria-hidden="true"><div class="memory__ghost"></div></div>
   <header class="memory__head">
     <p class="memory__eyebrow">bot-tan / memory</p>
     <h1 class="memory__title">Bot-tan's Memory</h1>
@@ -425,10 +434,71 @@ import {
     );
   }
 
-  .memory > * {
+  /* The backdrop is the one child that is not column-width content. */
+  .memory > *:not(.memory__ghost-rail) {
     position: relative;
     max-width: 72rem;
     margin-inline: auto;
+  }
+
+  /*
+   * The rail spans the section and bounds how far she can follow the scroll.
+   * `position: fixed` was the obvious choice and the wrong one: it ignores the
+   * section entirely, so she carried on painting over the footer. Anything that
+   * clips a fixed element also stops it being fixed, so the tool for "stays in
+   * view, but only within this block" is sticky.
+   */
+  .memory__ghost-rail {
+    position: absolute;
+    inset: 0;
+    /*
+     * Short of the section by exactly the parallax distance. `translate` is
+     * applied after sticky has clamped the element, so without this reservation
+     * the drift carries her past the section edge and back over the footer —
+     * the very thing sticky was brought in to stop.
+     */
+    bottom: 9vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .memory__ghost {
+    position: sticky;
+    /* Half her own height above centre, so she sits mid-viewport. */
+    top: calc(50vh - min(37vh, 19rem));
+    /* auto on the left is what pushes her to the right of the rail. */
+    margin-left: auto;
+    margin-right: max(1vw, calc(50% - 38rem));
+    width: min(58vh, 30rem);
+    height: min(74vh, 38rem);
+    background: var(--mem-work);
+    opacity: 0.085;
+    -webkit-mask: var(--mem-ghost) no-repeat center / contain;
+    mask: var(--mem-ghost) no-repeat center / contain;
+    /*
+     * Positive, so she drifts *down* while the page travels up — a small
+     * counter-motion, which is what reads as depth. `--scroll-progress` is
+     * published on <html> by SkyBackdrop, which BaseLayout renders on every
+     * page, so there is no second scroll listener here.
+     */
+    translate: 0 calc(var(--scroll-progress, 0) * 9vh);
+  }
+
+  /* On a phone she would be wider than the screen and read as a smear. */
+  @media (max-width: 40rem) {
+    .memory__ghost {
+      top: calc(50vh - min(22vh, 11rem));
+      margin-right: -4vw;
+      width: min(62vw, 15rem);
+      height: min(44vh, 22rem);
+      opacity: 0.07;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .memory__ghost {
+      translate: none;
+    }
   }
 
   .memory__eyebrow {

@@ -80,9 +80,8 @@ export interface Dictionary {
     friends: string;
     links: string;
     /**
-     * The memory graph at /memory. That page exists in English only, so this
-     * label is the same string in every dictionary — translating the link but
-     * not the page it opens would be worse than leaving it.
+     * The memory graph at /memory. The page itself is English-only, but the
+     * link to it is ordinary navigation and reads in the visitor's language.
      */
     memory: string;
     /** Label of the *other* language, used on the toggle button. */
