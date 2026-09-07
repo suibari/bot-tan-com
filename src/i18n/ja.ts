@@ -197,6 +197,7 @@ export const ja: Dictionary = {
     learnedThings: {
       heading: '最近教えてもらったこと',
       empty: 'まだ覚えたことはないよ',
+      viewMemory: 'botたんの記憶をもっと見る',
       searchLabel: 'Googleで「{label}」を検索',
     },
     offline: 'いまはbotたんとつながれないみたい。あとでまた見に来てね。',

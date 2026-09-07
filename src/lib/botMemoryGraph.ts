@@ -130,7 +130,7 @@ export function parseMemoryGraph(data: unknown): MemoryGraph {
 
 export async function fetchMemoryGraph(): Promise<MemoryGraph> {
   try {
-    const response = await fetch(MEMORY_GRAPH_API_URL);
+    const response = await fetch(MEMORY_GRAPH_API_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return parseMemoryGraph(await response.json());
   } catch (error) {

@@ -211,11 +211,34 @@ export function connectBotStatus({ onMessage, onStateChange }: ConnectOptions): 
     retryTimer = setTimeout(open, delay);
   };
 
+  // Browsers may preserve a WebSocket while throttling a background tab. A
+  // fresh connection asks the server for a new getCurrentState() snapshot, so
+  // every status consumer catches up immediately when the tab becomes active.
+  const refreshWhenVisible = () => {
+    if (document.hidden || disposed) return;
+
+    clearTimeout(retryTimer);
+    retries = 0;
+
+    const previous = socket;
+    socket = null;
+    if (previous) {
+      previous.onopen = null;
+      previous.onmessage = null;
+      previous.onerror = null;
+      previous.onclose = null;
+      previous.close();
+    }
+    open();
+  };
+
   open();
+  document.addEventListener('visibilitychange', refreshWhenVisible);
 
   return () => {
     disposed = true;
     clearTimeout(retryTimer);
+    document.removeEventListener('visibilitychange', refreshWhenVisible);
     socket?.close();
   };
 }
@@ -223,7 +246,7 @@ export function connectBotStatus({ onMessage, onStateChange }: ConnectOptions): 
 /** Historical follower counts, from the Cloudflare measurement worker. */
 export async function fetchFollowerHistory(): Promise<FollowerPoint[]> {
   try {
-    const response = await fetch(FOLLOWER_API_URL);
+    const response = await fetch(FOLLOWER_API_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data: unknown = await response.json();
     if (!Array.isArray(data)) return [];
@@ -267,7 +290,7 @@ export async function fetchHistory(days = 90): Promise<HistoryPayload> {
     const endpoint = new URL(HISTORY_API_URL);
     endpoint.searchParams.set('days', String(days));
 
-    const response = await fetch(endpoint);
+    const response = await fetch(endpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = (await response.json()) as Partial<HistoryPayload>;
@@ -313,7 +336,7 @@ export async function fetchTimeline(date?: string): Promise<TimelinePayload | nu
     const endpoint = new URL(TIMELINE_API_URL);
     if (date) endpoint.searchParams.set('date', date);
 
-    const response = await fetch(endpoint);
+    const response = await fetch(endpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = (await response.json()) as Partial<TimelinePayload>;

@@ -859,6 +859,7 @@ const runtimeStrings = {
     const TIMELINE_MAX_DAYS_BACK = 6;
     let timelineOffset = 0;
     let timelineBusy = false;
+    let timelineRefreshQueued = false;
 
     const shiftDate = (days: number): string => {
       const base = new Date(`${jstDate()}T00:00:00+09:00`);
@@ -1071,7 +1072,10 @@ const runtimeStrings = {
     };
 
     const loadTimeline = async () => {
-      if (timelineBusy) return;
+      if (timelineBusy) {
+        timelineRefreshQueued = true;
+        return;
+      }
       timelineBusy = true;
 
       const plot = $('timeline-plot');
@@ -1096,6 +1100,10 @@ const runtimeStrings = {
 
       plot?.style.removeProperty('opacity');
       timelineBusy = false;
+      if (timelineRefreshQueued) {
+        timelineRefreshQueued = false;
+        void loadTimeline();
+      }
     };
 
     $('timeline-prev')?.addEventListener('click', () => {
@@ -1379,9 +1387,56 @@ const runtimeStrings = {
       container.replaceChildren(link);
     }
 
+    let historyRefreshId = 0;
+    const loadDashboardHistory = async () => {
+      const refreshId = ++historyRefreshId;
+      const [followers, history] = await Promise.all([
+        fetchFollowerHistory(),
+        fetchHistory(90),
+      ]);
+      // A slower, older request must not overwrite a newer activation refresh.
+      if (refreshId !== historyRefreshId) return;
+
+      const fallbackFollowers = history.daily.flatMap((point) => {
+        const count = point.metrics?.bsky?.currentFollowers;
+        return typeof count === 'number' ? [{ date: point.date, count }] : [];
+      });
+      const latestMeasuredAt = Math.max(
+        ...followers.map((point) => new Date(point.date).getTime()).filter(Number.isFinite),
+        0,
+      );
+      const mergedFollowers = [
+        ...followers,
+        ...fallbackFollowers.filter(
+          (point) => new Date(point.date).getTime() > latestMeasuredAt,
+        ),
+      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const yesterday = jstDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+      const previousFollowers = history.daily.find((point) => point.date === yesterday)
+        ?.metrics?.bsky?.followers;
+      setText(
+        'bsky-followers-note',
+        template(strings.previousDayIncrease, { value: fmt(previousFollowers) }),
+      );
+
+      void renderFollowerChart(mergedFollowers);
+      void renderNagiUserChart(history.nagiUsers);
+      void renderNagiActivityChart(history.nagiHourly);
+      renderSparklines(history);
+    };
+
     // ------------------------------------------------------------- start ---
     connectBotStatus({ onMessage, onStateChange });
     void loadTimeline();
+
+    // HTTP-backed information is separate from the live socket. Refresh it
+    // when a background tab becomes visible, including across a JST day change.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      void loadTimeline();
+      if (chartsVisible) void loadDashboardHistory();
+    });
 
     // Defer the heavy charts until the dashboard is actually looked at.
     const dashboardEl = document.getElementById('dashboard');
@@ -1393,39 +1448,7 @@ const runtimeStrings = {
           observer.disconnect();
           chartsVisible = true;
 
-          void (async () => {
-            const [followers, history] = await Promise.all([
-              fetchFollowerHistory(),
-              fetchHistory(90),
-            ]);
-            const fallbackFollowers = history.daily.flatMap((point) => {
-              const count = point.metrics?.bsky?.currentFollowers;
-              return typeof count === 'number' ? [{ date: point.date, count }] : [];
-            });
-            const latestMeasuredAt = Math.max(
-              ...followers.map((point) => new Date(point.date).getTime()).filter(Number.isFinite),
-              0,
-            );
-            const mergedFollowers = [
-              ...followers,
-              ...fallbackFollowers.filter(
-                (point) => new Date(point.date).getTime() > latestMeasuredAt,
-              ),
-            ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            const yesterday = jstDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
-            const previousFollowers = history.daily.find((point) => point.date === yesterday)
-              ?.metrics?.bsky?.followers;
-            setText(
-              'bsky-followers-note',
-              template(strings.previousDayIncrease, { value: fmt(previousFollowers) }),
-            );
-
-            void renderFollowerChart(mergedFollowers);
-            void renderNagiUserChart(history.nagiUsers);
-            void renderNagiActivityChart(history.nagiHourly);
-            renderSparklines(history);
-          })();
+          void loadDashboardHistory();
 
           if (pendingLang) {
             void renderLangChart(pendingLang);

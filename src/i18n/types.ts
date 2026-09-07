@@ -215,6 +215,8 @@ export interface Dictionary {
     learnedThings: {
       heading: string;
       empty: string;
+      /** Link to the complete, English-only memory space at /memory. */
+      viewMemory: string;
       /** Accessible label for a tag link. Supports the {label} placeholder. */
       searchLabel: string;
     };

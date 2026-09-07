@@ -200,6 +200,7 @@ export const en: Dictionary = {
     learnedThings: {
       heading: 'Things you taught me recently',
       empty: 'Nothing learned yet',
+      viewMemory: "Explore Bot-tan's memory",
       searchLabel: 'Search Google for “{label}”',
     },
     offline: 'Cannot reach Bot-tan right now. Please come back a little later.',

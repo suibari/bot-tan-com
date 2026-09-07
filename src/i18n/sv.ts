@@ -200,6 +200,7 @@ export const sv: Dictionary = {
     learnedThings: {
       heading: 'Saker du har lärt mig nyligen',
       empty: 'Inget inlärt ännu',
+      viewMemory: 'Utforska Bot-tans minne',
       searchLabel: 'Sök på Google efter ”{label}”',
     },
     offline: 'Kan inte nå Bot-tan just nu. Kom tillbax senare.',

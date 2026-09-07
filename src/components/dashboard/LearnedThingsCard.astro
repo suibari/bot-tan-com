@@ -14,6 +14,7 @@ const learned = t.dashboard.learnedThings;
   <div class="learned__tags" id="learned-things" aria-live="polite">
     <p class="learned__empty">{learned.empty}</p>
   </div>
+  <a class="learned__memory-link" href="/memory">{learned.viewMemory} <span aria-hidden="true">→</span></a>
 </section>
 
 <style>
@@ -80,8 +81,28 @@ const learned = t.dashboard.learnedThings;
     letter-spacing: 0.02em;
   }
 
+  .learned__memory-link {
+    justify-self: start;
+    color: var(--color-sky-deep);
+    font-family: var(--font-hand);
+    font-size: 0.9rem;
+    text-underline-offset: 0.2em;
+    transition: translate 180ms ease;
+  }
+
+  .learned__memory-link:hover {
+    translate: 0.2rem 0;
+  }
+
+  .learned__memory-link:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-sky-deep) 35%, transparent);
+    outline-offset: 3px;
+    border-radius: 0.2rem;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .learned :global(.learned__tag) {
+    .learned :global(.learned__tag),
+    .learned__memory-link {
       transition: none;
     }
   }
