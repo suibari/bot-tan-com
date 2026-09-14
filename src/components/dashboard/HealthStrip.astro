@@ -34,6 +34,16 @@ const tiles = HEALTH_TILES.map((id) => ({ id, label: h.tiles[id] }));
             <span class="lamp__state" id={`health-${tile.id}-state`}>
               {h.states.unknown}
             </span>
+            {tile.id === 'storage' && (
+              <progress
+                class="lamp__meter"
+                id="health-storage-meter"
+                max="100"
+                value="0"
+                aria-label={h.storageAria.replace('{percent}', '0')}
+                hidden
+              />
+            )}
           </span>
           <details class="lamp__details">
             <summary>{h.detailLabel}</summary>
@@ -138,6 +148,31 @@ const tiles = HEALTH_TILES.map((id) => ({ id, label: h.tiles[id] }));
     font-size: 0.72rem;
     line-height: 1.35;
     color: var(--color-ink-soft);
+  }
+
+  .lamp__meter {
+    width: 100%;
+    height: 0.38rem;
+    margin-top: 0.2rem;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  }
+
+  .lamp__meter::-webkit-progress-bar {
+    background: color-mix(in srgb, var(--color-ink) 10%, transparent);
+    border-radius: 999px;
+  }
+
+  .lamp__meter::-webkit-progress-value {
+    background: var(--state-color, #8a8079);
+    border-radius: 999px;
+  }
+
+  .lamp__meter::-moz-progress-bar {
+    background: var(--state-color, #8a8079);
+    border-radius: 999px;
   }
 
   .lamp__details {

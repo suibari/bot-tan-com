@@ -67,10 +67,16 @@ export interface HealthPart {
 export interface HealthTileStatus {
   state: HealthState;
   parts?: HealthPart[];
+  disk?: {
+    totalBytes?: number;
+    usedBytes?: number;
+    availableBytes?: number;
+    usedPercent?: number;
+  };
 }
 
-/** The four tiles the dashboard shows, each an aggregate of its parts. */
-export type HealthTileId = 'jetstream' | 'botServer' | 'localLlm' | 'webSearch';
+/** The tiles the dashboard shows, each an aggregate of its parts. */
+export type HealthTileId = 'jetstream' | 'botServer' | 'localLlm' | 'webSearch' | 'storage';
 
 export type HealthSnapshot = Partial<Record<HealthTileId, HealthTileStatus>> & {
   checkedAt?: string;

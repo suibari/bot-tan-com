@@ -108,6 +108,7 @@ export const sv: Dictionary = {
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
         webSearch: 'Sökmotor (egen server)',
+        storage: 'Huvudserver (lagring)',
       },
       states: {
         ok: 'Allt körs okej!',
@@ -116,6 +117,15 @@ export const sv: Dictionary = {
         unknown: 'Vet Ej',
         unconfigured: 'Inte än konfigurerad',
       },
+      storageStates: {
+        ok: 'Gott om ledigt utrymme',
+        stale: 'Det lediga utrymmet minskar',
+        down: 'Åtgärd krävs',
+        unknown: 'Kontrollerar kapaciteten',
+        unconfigured: 'Övervakas inte',
+      },
+      storageSummary: '{percent}% använt · {available} ledigt',
+      storageAria: 'Diskanvändning på huvudservern: {percent}%',
       detailLabel: 'Detaljer',
       lastOkLabel: 'Senaste OK-signalen',
     },

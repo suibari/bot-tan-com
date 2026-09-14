@@ -105,6 +105,7 @@ export const ja: Dictionary = {
         botServer: 'botたんサーバー',
         localLlm: 'サブサーバー（ローカルLLM）',
         webSearch: '検索エンジン（自前ホスト）',
+        storage: 'メインサーバー（ストレージ）',
       },
       states: {
         ok: '元気に動いてるよ',
@@ -113,6 +114,15 @@ export const ja: Dictionary = {
         unknown: 'まだわからない',
         unconfigured: '使ってないよ',
       },
+      storageStates: {
+        ok: '空き容量は十分',
+        stale: '空き容量が減ってるよ',
+        down: '対応が必要だよ',
+        unknown: '容量を確認中',
+        unconfigured: '監視してないよ',
+      },
+      storageSummary: '{percent}% 使用中・空き {available}',
+      storageAria: 'メインサーバーのディスク使用率 {percent}%',
       detailLabel: 'くわしく',
       lastOkLabel: '最終確認',
     },
