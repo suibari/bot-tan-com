@@ -266,6 +266,9 @@ const runtimeStrings = {
       heading: string;
       tiles: Record<HealthTileId, string>;
       states: Record<HealthState, string>;
+      storageStates: Record<HealthState, string>;
+      storageSummary: string;
+      storageAria: string;
       detailLabel: string;
       lastOkLabel: string;
     };
@@ -358,7 +361,15 @@ const runtimeStrings = {
     };
 
     // ------------------------------------------------------------ health --
-    const HEALTH_TILES: HealthTileId[] = ['jetstream', 'botServer', 'localLlm', 'webSearch'];
+    const HEALTH_TILES: HealthTileId[] = ['jetstream', 'botServer', 'localLlm', 'webSearch', 'storage'];
+
+    const formatBytes = (bytes: number): string => {
+      if (!Number.isFinite(bytes) || bytes < 0) return '---';
+      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+      const index = Math.min(Math.floor(Math.log(Math.max(bytes, 1)) / Math.log(1024)), units.length - 1);
+      const value = bytes / 1024 ** index;
+      return `${new Intl.NumberFormat(strings.locale, { maximumFractionDigits: 1 }).format(value)} ${units[index]}`;
+    };
 
     const renderHealth = (health: HealthSnapshot | null | undefined) => {
       for (const id of HEALTH_TILES) {
@@ -370,7 +381,38 @@ const runtimeStrings = {
           el.dataset.state = state;
           el.style.setProperty('--state-color', strings.tokens.healthState[state]);
         }
-        setText(`health-${id}-state`, strings.health.states[state]);
+        const disk = tile?.disk;
+        const diskPercent = disk?.usedPercent;
+        const hasDiskUsage = id === 'storage'
+          && typeof diskPercent === 'number'
+          && Number.isFinite(diskPercent)
+          && typeof disk?.availableBytes === 'number';
+        const percent = hasDiskUsage ? Math.round(diskPercent * 10) / 10 : 0;
+        setText(
+          `health-${id}-state`,
+          hasDiskUsage
+            ? template(strings.health.storageSummary, {
+                percent: numberFormat.format(percent),
+                available: formatBytes(disk.availableBytes!),
+              })
+            : id === 'storage'
+              ? strings.health.storageStates[state]
+              : strings.health.states[state],
+        );
+
+        if (id === 'storage') {
+          const meter = $('health-storage-meter') as HTMLProgressElement | null;
+          if (meter) {
+            meter.hidden = !hasDiskUsage;
+            if (hasDiskUsage) {
+              meter.value = percent;
+              meter.setAttribute(
+                'aria-label',
+                template(strings.health.storageAria, { percent: numberFormat.format(percent) }),
+              );
+            }
+          }
+        }
 
         // The breakdown is built with the DOM API: probe names and error text
         // come off the wire and must never be interpreted as markup.
@@ -387,7 +429,9 @@ const runtimeStrings = {
 
           const partState = document.createElement('span');
           partState.className = 'part__state';
-          partState.textContent = strings.health.states[part.state] ?? part.state;
+          partState.textContent = id === 'storage'
+            ? strings.health.storageStates[part.state] ?? part.state
+            : strings.health.states[part.state] ?? part.state;
           partState.style.color = strings.tokens.healthState[part.state] ?? MUTED_INK;
 
           li.append(name, partState);

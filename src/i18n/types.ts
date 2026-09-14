@@ -5,8 +5,8 @@ export type Lang = (typeof LOCALES)[number];
 export const STATUSES = ['Sleep', 'WakeUp', 'Study', 'FreeTime', 'Relax'] as const;
 export type Status = (typeof STATUSES)[number];
 
-/** The four things the liveness strip watches, each an aggregate of probes. */
-export const HEALTH_TILES = ['jetstream', 'botServer', 'localLlm', 'webSearch'] as const;
+/** The service-continuity signals shown in the health strip. */
+export const HEALTH_TILES = ['jetstream', 'botServer', 'localLlm', 'webSearch', 'storage'] as const;
 export type HealthTileId = (typeof HEALTH_TILES)[number];
 
 export const HEALTH_STATES = ['ok', 'stale', 'down', 'unknown', 'unconfigured'] as const;
@@ -134,6 +134,9 @@ export interface Dictionary {
       heading: string;
       tiles: Record<HealthTileId, string>;
       states: Record<HealthStateId, string>;
+      storageStates: Record<HealthStateId, string>;
+      storageSummary: string;
+      storageAria: string;
       /** Toggle that reveals the per-probe breakdown. */
       detailLabel: string;
       lastOkLabel: string;

@@ -108,6 +108,7 @@ export const en: Dictionary = {
         botServer: 'Bot-tan server',
         localLlm: 'Sub-server (local LLM)',
         webSearch: 'Search engine (self-hosted)',
+        storage: 'Main server (storage)',
       },
       states: {
         ok: 'Running fine',
@@ -116,6 +117,15 @@ export const en: Dictionary = {
         unknown: 'No data yet',
         unconfigured: 'Not in use',
       },
+      storageStates: {
+        ok: 'Plenty of free space',
+        stale: 'Free space is running low',
+        down: 'Attention required',
+        unknown: 'Checking capacity',
+        unconfigured: 'Not monitored',
+      },
+      storageSummary: '{percent}% used · {available} free',
+      storageAria: 'Main server disk usage: {percent}%',
       detailLabel: 'Details',
       lastOkLabel: 'Last seen',
     },
