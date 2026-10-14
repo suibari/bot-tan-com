@@ -397,7 +397,9 @@ const runtimeStrings = {
               })
             : id === 'storage'
               ? strings.health.storageStates[state]
-              : strings.health.states[state],
+              : id === 'localLlm' && tile?.parts?.find(part => part.id === 'ollama-placement')?.message
+                ? tile.parts.find(part => part.id === 'ollama-placement')!.message!
+                : strings.health.states[state],
         );
 
         if (id === 'storage') {
@@ -441,6 +443,13 @@ const runtimeStrings = {
             seen.className = 'part__seen';
             seen.textContent = `${strings.health.lastOkLabel} ${hhmm.format(new Date(part.lastOkAt))}`;
             li.append(seen);
+          }
+
+          if (part.message) {
+            const message = document.createElement('span');
+            message.className = 'part__error';
+            message.textContent = part.message;
+            li.append(message);
           }
 
           if (part.lastError) {

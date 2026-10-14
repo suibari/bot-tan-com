@@ -58,10 +58,12 @@ export type HealthState = 'ok' | 'stale' | 'down' | 'unknown' | 'unconfigured';
 
 /** One probe inside a tile — e.g. the Bluesky half of "Jetstream". */
 export interface HealthPart {
+  id?: string;
   name: string;
   state: HealthState;
   lastOkAt?: string;
   lastError?: string;
+  message?: string;
 }
 
 export interface HealthTileStatus {
