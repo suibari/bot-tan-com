@@ -177,7 +177,9 @@ const ogImage = new URL('/ogp.png', Astro.site).href;
               observer.unobserve(entry.target);
             }
           },
-          { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+          // Tall cards (especially the stacked mobile dashboard) may never
+          // fit 12% of their area in the viewport. Reveal on entry instead.
+          { rootMargin: '0px 0px -12% 0px', threshold: 0 },
         );
 
         revealables.forEach((el) => observer.observe(el));
