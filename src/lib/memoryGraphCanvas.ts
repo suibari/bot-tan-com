@@ -235,6 +235,7 @@ export async function createMemoryGraphView(
   let nodes: SimNode[] = [];
   let edges: SimEdge[] = [];
   let byId = new Map<string, SimNode>();
+  let hasLoaded = false;
   let selectedId: string | null = null;
   let hoverId: string | null = null;
   let filter = '';
@@ -452,6 +453,11 @@ export async function createMemoryGraphView(
   function update(graph: MemoryGraph) {
     const now = Date.now();
     const previous = byId;
+    // Only memories that turn up on a later poll are "new". On the first load
+    // every node would flare at once — a hundred concentric rings blooming
+    // together reads as a cluster of holes, not as arrivals.
+    const isFirstLoad = !hasLoaded;
+    if (graph.nodes.length > 0) hasLoaded = true;
     sizeWorld(graph.nodes.length);
 
     const next: SimNode[] = graph.nodes.map((node) => {
@@ -465,7 +471,7 @@ export async function createMemoryGraphView(
         vy: existing?.vy ?? 0,
         radius: radiusOf(node.occurrences),
         freshness: freshnessOf(node.latestAt, now),
-        bornAt: existing?.bornAt ?? now,
+        bornAt: existing?.bornAt ?? (isFirstLoad ? now - ARRIVAL_MS : now),
         degree: 0,
         // Measured once here, not once per node per frame: `measureText` is
         // expensive and a label never changes width.

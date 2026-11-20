@@ -171,10 +171,22 @@ import {
 
 <script>
   import { connectBotStatus, type BotStatusPayload, type ConnectionState } from '../../lib/botStatus';
-  import { fetchMemoryGraph, EMPTY_MEMORY_GRAPH, type MemoryGraph, type MemoryNode } from '../../lib/botMemoryGraph';
+  import {
+    fetchKnowledgeCards,
+    fetchMemoryGraph,
+    EMPTY_MEMORY_GRAPH,
+    type KnowledgeCard,
+    type MemoryGraph,
+    type MemoryNode,
+  } from '../../lib/botMemoryGraph';
   import { createMemoryGraphView, type MemoryGraphView } from '../../lib/memoryGraphCanvas';
 
   const POLL_MS = 60_000;
+  /**
+   * Hover sweeps across many nodes on the way to the one you want. Only ask the
+   * server about a node the pointer actually rests on.
+   */
+  const CARD_DELAY_MS = 220;
 
   const canvas = document.getElementById('mem-canvas') as HTMLCanvasElement | null;
   const search = document.getElementById('mem-search') as HTMLInputElement | null;
@@ -243,8 +255,94 @@ import {
 
     const labelOf = (id: string) => graph.nodes.find((node) => node.id === id)?.label ?? id;
 
+    // One request per label per page view. A failed request is dropped so the
+    // next hover tries again.
+    const cardCache = new Map<string, Promise<KnowledgeCard[] | null>>();
+    let cardTimer: ReturnType<typeof setTimeout> | undefined;
+    let readoutId: string | null = null;
+
+    function cardsFor(node: MemoryNode): Promise<KnowledgeCard[] | null> {
+      let pending = cardCache.get(node.id);
+      if (!pending) {
+        pending = fetchKnowledgeCards(node.label);
+        cardCache.set(node.id, pending);
+        pending.then((cards) => {
+          if (cards === null) cardCache.delete(node.id);
+        });
+      }
+      return pending;
+    }
+
+    const hostOf = (url: string): string => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch {
+        return url;
+      }
+    };
+
+    const sourceLinks = (urls: string[]): string =>
+      urls
+        .map(
+          (url) =>
+            `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer nofollow">${escapeHtml(hostOf(url))}</a>`,
+        )
+        .join(' · ');
+
+    function cardHtml(cards: KnowledgeCard[]): string {
+      if (cards.length === 0) {
+        return '<p class="memory__card-none">She hasn&rsquo;t looked this one up. It&rsquo;s something she picked up from talking with people, and those conversations stay private.</p>';
+      }
+      return cards
+        .map((card) => {
+          const sections = card.sections
+            .map(
+              (section) => `
+                <div class="memory__card-section">
+                  ${section.heading ? `<h4>${escapeHtml(section.heading)}</h4>` : ''}
+                  <p>${escapeHtml(section.detail)}</p>
+                  ${section.sources.length ? `<p class="memory__card-sources">${sourceLinks(section.sources)}</p>` : ''}
+                </div>`,
+            )
+            .join('');
+          const meta = [card.context ? `as in ${card.context}` : '', card.learnedAt ? `learned ${relative(card.learnedAt)}` : '']
+            .filter(Boolean)
+            .join(' · ');
+          return `
+            <article class="memory__card" lang="ja">
+              ${meta ? `<p class="memory__card-meta" lang="en">${escapeHtml(meta)}</p>` : ''}
+              ${card.overview ? `<p class="memory__card-overview">${escapeHtml(card.overview)}</p>` : ''}
+              ${sections}
+              ${card.sources.length ? `<p class="memory__card-sources" lang="en"><span>read from</span> ${sourceLinks(card.sources)}</p>` : ''}
+            </article>`;
+        })
+        .join('');
+    }
+
+    function loadCard(node: MemoryNode) {
+      clearTimeout(cardTimer);
+      cardTimer = setTimeout(async () => {
+        const cards = await cardsFor(node);
+        // The pointer may have moved on while the request was out.
+        if (readoutId !== node.id || !readout) return;
+        const slot = readout.querySelector<HTMLElement>('.memory__readout-card');
+        if (!slot) return;
+        if (cards === null) {
+          slot.remove();
+          return;
+        }
+        slot.innerHTML = `<p class="memory__readout-section">what she looked up</p>${cardHtml(cards)}`;
+        slot.setAttribute('aria-busy', 'false');
+      }, CARD_DELAY_MS);
+    }
+
     function renderReadout(node: MemoryNode | null) {
       if (!readout) return;
+      // Hover and click both land here, often for the node already shown.
+      // Re-rendering would throw away a card the reader is halfway through.
+      if ((node?.id ?? null) === readoutId && node) return;
+      readoutId = node?.id ?? null;
+      clearTimeout(cardTimer);
       if (!node) {
         readout.innerHTML =
           '<p class="memory__readout-hint">Point at a node — or pick a row in the list — to read what Bot-tan knows about it.</p>';
@@ -266,7 +364,12 @@ import {
           <dt>last seen</dt><dd>${escapeHtml(relative(node.latestAt))}</dd>
         </dl>
         ${linked.length > 0 ? `<p class="memory__readout-linked"><span>connected to</span> ${linked.map((l) => `<em>${escapeHtml(l)}</em>`).join(', ')}</p>` : ''}
+        <div class="memory__readout-card" aria-busy="true">
+          <p class="memory__readout-section">what she looked up</p>
+          <p class="memory__card-none">opening her notes&hellip;</p>
+        </div>
       `;
+      loadCard(node);
     }
 
     function escapeHtml(value: string): string {
@@ -868,6 +971,80 @@ import {
   .memory__readout :global(.memory__readout-linked em) {
     font-style: normal;
     color: var(--mem-highlight);
+  }
+
+  .memory__readout :global(.memory__readout-card) {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed color-mix(in srgb, var(--mem-edge) 55%, transparent);
+    max-height: 24rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .memory__readout :global(.memory__readout-section) {
+    margin: 0 0 0.5rem;
+    color: var(--mem-text-soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .memory__readout :global(.memory__card + .memory__card) {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid color-mix(in srgb, var(--mem-edge) 35%, transparent);
+  }
+
+  .memory__readout :global(.memory__card p),
+  .memory__readout :global(.memory__card h4) {
+    margin: 0;
+    line-height: 1.75;
+    color: var(--mem-text);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  .memory__readout :global(.memory__card-meta) {
+    color: var(--mem-text-soft) !important;
+    font-size: 0.75rem;
+  }
+
+  .memory__readout :global(.memory__card-overview) {
+    margin-top: 0.3rem !important;
+  }
+
+  .memory__readout :global(.memory__card-section) {
+    margin-top: 0.75rem;
+  }
+
+  .memory__readout :global(.memory__card h4) {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--mem-highlight);
+  }
+
+  .memory__readout :global(.memory__card-sources) {
+    margin-top: 0.35rem !important;
+    font-size: 0.72rem;
+    color: var(--mem-text-soft) !important;
+  }
+
+  .memory__readout :global(.memory__card-sources span) {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-right: 0.3rem;
+  }
+
+  .memory__readout :global(.memory__card-sources a) {
+    color: var(--mem-work);
+    text-underline-offset: 2px;
+  }
+
+  .memory__readout :global(.memory__card-none) {
+    margin: 0;
+    color: var(--mem-text-soft);
+    line-height: 1.8;
   }
 
   .memory__legend {

@@ -138,3 +138,90 @@ export async function fetchMemoryGraph(): Promise<MemoryGraph> {
     return EMPTY_MEMORY_GRAPH;
   }
 }
+
+/**
+ * What Bot-tan looked up about a word — the biorhythm server's
+ * `/memory-graph/card`.
+ *
+ * These are only her *research* notes: summaries of public web pages she read
+ * after a word came up. Conversations themselves never come through here. The
+ * server also refuses any label that is not already on the public graph, so
+ * asking about a word cannot reveal whether it was ever said.
+ */
+export interface KnowledgeCardSection {
+  /** Empty when the stored note had no heading. */
+  heading: string;
+  detail: string;
+  sources: string[];
+}
+
+export interface KnowledgeCard {
+  term: string;
+  /** The topic she looked it up under ("Yu-Gi-Oh!" and so on), when known. */
+  context: string | null;
+  learnedAt: string;
+  overview: string | null;
+  sections: KnowledgeCardSection[];
+  sources: string[];
+}
+
+const strings = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && /^https?:\/\//i.test(item))
+    : [];
+
+function parseCard(value: unknown): KnowledgeCard | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const raw = value as Record<string, unknown>;
+  const sections = (Array.isArray(raw.sections) ? raw.sections : [])
+    .map((section): KnowledgeCardSection | null => {
+      if (typeof section !== 'object' || section === null) return null;
+      const s = section as Record<string, unknown>;
+      const detail = typeof s.detail === 'string' ? s.detail : '';
+      if (!detail) return null;
+      return { heading: typeof s.heading === 'string' ? s.heading : '', detail, sources: strings(s.sources) };
+    })
+    .filter((section): section is KnowledgeCardSection => section !== null);
+  const overview = typeof raw.overview === 'string' && raw.overview ? raw.overview : null;
+  if (!overview && sections.length === 0) return null;
+  return {
+    term: typeof raw.term === 'string' ? raw.term : '',
+    context: typeof raw.context === 'string' && raw.context ? raw.context : null,
+    learnedAt: typeof raw.learnedAt === 'string' ? raw.learnedAt : '',
+    overview,
+    sections,
+    sources: strings(raw.sources),
+  };
+}
+
+function cardUrl(label: string): string {
+  const url = new URL(MEMORY_GRAPH_API_URL);
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/card`;
+  url.search = '';
+  url.searchParams.set('label', label);
+  return url.toString();
+}
+
+/**
+ * Cards for one label. Resolves to `[]` when she has none (404 included) and
+ * to `null` when the request itself failed, so the caller can tell "nothing to
+ * show" from "try again later".
+ */
+export async function fetchKnowledgeCards(label: string): Promise<KnowledgeCard[] | null> {
+  try {
+    const response = await fetch(cardUrl(label));
+    // The route answers a label that is off the graph with a JSON 404. An HTML
+    // 404 is a server that predates the route — that is "unknown", not "none".
+    if (response.status === 404) {
+      return (response.headers.get('content-type') ?? '').includes('json') ? [] : null;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = (await response.json()) as Record<string, unknown>;
+    return (Array.isArray(data.cards) ? data.cards : [])
+      .map(parseCard)
+      .filter((card): card is KnowledgeCard => card !== null);
+  } catch (error) {
+    console.error('Failed to fetch knowledge card:', error);
+    return null;
+  }
+}
